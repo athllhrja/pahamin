@@ -1,0 +1,378 @@
+# Aturan Penulisan Kode & Arsitektur — PahaMIn Web App
+
+Standar ini wajib diterapkan pada seluruh kode PahaMIn.
+
+Tujuan utama:
+
+- Menjaga kode tetap bersih dan konsisten.
+- Meningkatkan keamanan dan performa.
+- Membuat kode bersifat **self-documenting**.
+- Menjaga pemisahan tanggung jawab antara frontend dan backend.
+
+AI Agent **WAJIB** mematuhi seluruh aturan berikut tanpa terkecuali.
+
+---
+
+## 1. Prinsip Utama: Larangan Komentar Deskriptif
+
+**DILARANG KERAS menulis komentar apa pun di dalam kode untuk menjelaskan logika.**
+
+Larangan ini bersifat mutlak dan mencakup seluruh bentuk komentar, seperti:
+
+- `//`
+- `/* ... */`
+- `{/* ... */}`
+- `#`
+- `""" ... """` pada Python
+
+Kejelasan kode hanya boleh berasal dari:
+
+- Nama variabel yang jelas.
+- Nama fungsi yang deskriptif.
+- Tipe data yang tepat.
+- Struktur kode yang sederhana dan mudah dipahami.
+
+Jika suatu bagian kode terlihat rumit dan membutuhkan komentar, lakukan salah satu tindakan berikut:
+
+1. Refactor kode.
+2. Pecah fungsi menjadi beberapa fungsi yang lebih kecil.
+3. Perbaiki penamaan variabel, fungsi, atau tipe data.
+
+Jangan meninggalkan:
+
+- Kode yang sudah tidak digunakan.
+- Kode yang di-comment-out.
+- Komentar deskriptif atau boilerplate.
+
+### Pengecualian
+
+Komentar hanya diperbolehkan untuk direktif teknis atau pragma berikut:
+
+- `"use client"`
+- `"use server"`
+- `import "server-only"`
+- `# type: ignore` pada Python
+
+---
+
+## 2. Arsitektur Terpisah
+
+PahaMIn menggunakan dua sistem utama:
+
+1. Frontend Next.js.
+2. Backend AI FastAPI.
+
+AI harus memahami kapan menggunakan TypeScript dan kapan menggunakan Python.
+
+### 2.1 Frontend — Next.js
+
+Teknologi:
+
+- Next.js 15+
+- React 19
+- TypeScript
+- `strict: true`
+
+Frontend digunakan untuk:
+
+- UI Matriks Eisenhower.
+- Dasbor Profil.
+- Autentikasi.
+- Interaksi pengguna.
+
+Aturan wajib:
+
+- Server Components digunakan sebagai default.
+- `"use client"` hanya boleh ditambahkan pada komponen yang membutuhkan state, hooks, interaktivitas, atau drag-and-drop.
+- Dilarang menggunakan `any`.
+- Gunakan `unknown`, kemudian lakukan penyempitan tipe (*type narrowing*) sesuai kebutuhan.
+
+### 2.2 Backend AI Engine — FastAPI
+
+Backend AI digunakan **KHUSUS** untuk fitur Ruang Paham, meliputi:
+
+- Ekstraksi teks dari PDF.
+- Pemrosesan materi pembelajaran.
+- Prompting ke LLM.
+- Pembuatan kuis AI.
+
+Aturan wajib:
+
+- Semua fungsi Python harus memiliki type hints pada parameter.
+- Semua fungsi Python harus memiliki type hints pada nilai kembalian.
+- Semua respons API ke frontend harus menggunakan JSON terstruktur.
+
+---
+
+## 3. Styling & UI/UX
+
+Teknologi dan standar:
+
+- Tailwind CSS v4.
+- shadcn/ui.
+- `cn()` dari kombinasi `clsx` dan `tailwind-merge`.
+
+### 3.1 Komponen UI
+
+- Gunakan komponen siap pakai dari **shadcn/ui**.
+- Jangan membuat dropdown, modal, atau komponen serupa dari nol kecuali benar-benar diperlukan.
+
+### 3.2 Styling
+
+- Terapkan pendekatan utility-first.
+- Dilarang menggunakan inline style seperti `style={{ ... }}`.
+- Gunakan `cn()` untuk conditional styling.
+
+### 3.3 Warna Wajib PahaMIn
+
+| Elemen | Warna | Kode |
+|---|---|---|
+| Primary Action | Biru | `#2563EB` |
+| Background Umum | Putih tulang | `#F3F4F6` |
+| Background Card | Putih bersih | `#FFFFFF` |
+| Teks | Abu-abu gelap | `#6B7280` |
+
+### 3.4 Aksesibilitas dan Tema
+
+- Matriks Eisenhower wajib menggunakan kontainer dengan bayangan halus (*drop-shadow*).
+- Area AI atau Ruang Paham wajib menggunakan kontainer dengan bayangan halus (*drop-shadow*).
+- Pastikan komponen tetap mudah digunakan dan terbaca pada berbagai ukuran layar.
+
+---
+
+## 4. Validasi dan Form
+
+### 4.1 Frontend
+
+Semua input frontend wajib divalidasi menggunakan:
+
+- Zod.
+- `react-hook-form`.
+- `zodResolver`.
+
+### 4.2 Backend
+
+Semua endpoint FastAPI wajib memvalidasi data masuk menggunakan:
+
+- `Pydantic BaseModel`.
+
+Data dari client tidak boleh dipercaya secara langsung.
+
+Semua data wajib divalidasi ulang ketika diterima oleh endpoint backend.
+
+---
+
+## 5. Fitur Matriks Eisenhower — Drag-and-Drop
+
+Gunakan library drag-and-drop modern dan ringan, seperti:
+
+- `@hello-pangea/dnd`
+- `dnd-kit`
+
+### 5.1 Optimistic UI
+
+Alur drag-and-drop wajib menggunakan pendekatan **Optimistic UI**:
+
+1. Perbarui state UI terlebih dahulu agar perpindahan kartu terasa instan.
+2. Kirim request mutasi ke Supabase secara background.
+3. Jika request berhasil, pertahankan perubahan.
+4. Jika request gagal:
+   - Kembalikan kartu ke kuadran asal.
+   - Revert state sesuai kondisi sebelumnya.
+   - Tampilkan pesan error kepada pengguna.
+
+---
+
+## 6. Fitur Ruang Paham — PDF dan AI
+
+### 6.1 Pemrosesan PDF
+
+- Pemrosesan PDF wajib dilakukan di backend FastAPI.
+- Gunakan **PyMuPDF (`fitz`)** untuk ekstraksi teks.
+- Dilarang melakukan parsing PDF di browser client.
+
+### 6.2 Performa
+
+- Target waktu respons AI adalah di bawah 10 detik.
+- Frontend wajib menampilkan loading state interaktif selama menunggu respons dari FastAPI.
+
+### 6.3 Endpoint Kuis AI
+
+Endpoint kuis AI wajib memaksa LLM untuk mengembalikan schema baku.
+
+Contoh format respons:
+
+```json
+{
+  "questions": [
+    {
+      "q": "Pertanyaan kuis",
+      "options": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "answer": "A"
+    }
+  ]
+}
+```
+
+---
+
+## 7. Database dan Keamanan — Supabase
+
+### 7.1 Secret Management
+
+Secret hanya boleh digunakan di server.
+
+Secret berikut **TIDAK BOLEH** dikirim atau diakses oleh Client Components:
+
+- `GEMINI_API_KEY`
+- Rahasia JWT.
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+### 7.2 Row Level Security
+
+- Row Level Security (**RLS**) wajib aktif pada seluruh tabel.
+- Pengguna hanya boleh:
+  - Melihat datanya sendiri.
+  - Mengubah datanya sendiri.
+  - Menghapus datanya sendiri.
+
+Akses data harus dibatasi berdasarkan `auth.uid()`.
+
+---
+
+## 8. Penamaan dan Konvensi
+
+### 8.1 TypeScript
+
+| Jenis | Konvensi | Contoh |
+|---|---|---|
+| Komponen | `PascalCase` | `TaskCard.tsx` |
+| Tipe | `PascalCase` | `TaskStatus` |
+| Variabel | `camelCase` | `taskData` |
+| Fungsi | `camelCase` | `fetchTasks` |
+
+### 8.2 Python
+
+| Jenis | Konvensi | Contoh |
+|---|---|---|
+| Variabel | `snake_case` | `task_data` |
+| Fungsi | `snake_case` | `extract_pdf` |
+| Class | `PascalCase` | `QuizResponse` |
+| Model | `PascalCase` | `QuizResponse` |
+
+### 8.3 Konstanta Global
+
+Konstanta global wajib menggunakan format `UPPER_SNAKE_CASE`.
+
+Contoh:
+
+```text
+MAX_FILE_SIZE_MB
+```
+
+### 8.4 Larangan Singkatan
+
+Hindari singkatan yang tidak jelas, seperti:
+
+- `t`
+- `dt`
+- `usr`
+
+Gunakan nama yang bermakna, seperti:
+
+- `task`
+- `data`
+- `user`
+
+---
+
+## 9. Struktur Folder yang Diharapkan
+
+PahaMIn menggunakan struktur **Monorepo Light** berikut:
+
+```text
+pahamin/
+├── web/                           # FRONTEND (Next.js)
+│   ├── app/                       # Routing & Pages
+│   ├── components/                # UI Components (shadcn, dnd)
+│   ├── lib/                       # Zod validation, Supabase client
+│   └── types/                     # Supabase DB types
+└── api/                           # BACKEND AI (FastAPI)
+    ├── main.py                    # Entry point FastAPI
+    ├── routers/                   # Endpoint API
+    └── schemas.py                 # Pydantic models
+```
+
+---
+
+## 10. Batasan Ukuran Komponen — Anti-Spaghetti Code
+
+Jangan membuat komponen React yang terlalu besar atau monolitik.
+
+Aturan wajib:
+
+- Jika file `.tsx` melebihi 200 baris kode, pecah menjadi subkomponen atau helper yang lebih kecil.
+- Jika fungsi Python melebihi 200 baris kode, pecah menjadi beberapa fungsi helper yang lebih kecil.
+- Setiap fungsi dan komponen harus memiliki satu tanggung jawab yang jelas.
+
+---
+
+## 11. Manajemen State Global dan Notifikasi
+
+### 11.1 State Global
+
+Gunakan **Zustand** untuk state yang digunakan lintas komponen, seperti:
+
+- State Matriks Eisenhower.
+- Data atau status yang sering berubah dan digunakan oleh beberapa komponen.
+
+Dilarang menggunakan React Context untuk data yang sering berubah.
+
+### 11.2 Error Handling
+
+- Jangan pernah menelan error secara diam-diam.
+- Dilarang menggunakan `catch {}` kosong.
+- Error harus dicatat melalui `console`.
+- Pengguna harus menerima notifikasi error menggunakan **Sonner**.
+
+---
+
+## 12. Aturan Environment Variables
+
+AI **DILARANG** mengarang atau mengasumsikan keberadaan environment variable baru tanpa memberi tahu pengguna.
+
+Jika diperlukan key baru, AI wajib memberikan instruksi eksplisit untuk menambahkannya pada file yang sesuai:
+
+- `.env.local` untuk frontend.
+- `.env` untuk backend.
+
+Informasi yang harus disampaikan:
+
+- Nama environment variable.
+- File tempat variable harus ditambahkan.
+- Tujuan penggunaan variable tersebut.
+- Apakah variable hanya boleh digunakan di server.
+
+---
+
+## 13. Checklist Komit Harian AI
+
+Sebelum memberikan hasil kode akhir, pastikan seluruh poin berikut terpenuhi:
+
+- [ ] Tidak ada komentar deskriptif atau boilerplate.
+- [ ] Tidak ada kode yang di-comment-out atau dead code.
+- [ ] TypeScript lolos pengecekan tipe.
+- [ ] Tidak ada penggunaan `any` di TypeScript.
+- [ ] Semua fungsi Python memiliki type hints lengkap.
+- [ ] Optimistic UI dan state management Zustand diterapkan dengan aman.
+- [ ] Tidak ada API key atau secret yang bocor ke client browser.
+- [ ] Seluruh input frontend divalidasi menggunakan Zod.
+- [ ] Seluruh endpoint backend divalidasi menggunakan Pydantic.
+- [ ] RLS aktif pada seluruh tabel Supabase.
+- [ ] Error ditangani, dicatat, dan ditampilkan melalui Sonner.
+- [ ] File `.tsx` dan fungsi Python tidak melebihi 200 baris tanpa dipecah.
