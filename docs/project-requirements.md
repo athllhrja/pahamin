@@ -53,3 +53,35 @@ Sistem PahaMIn menggunakan arsitektur terpisah (*Monorepo Light*) dengan pedoman
 - **Backend AI Engine:** FastAPI (Python) dengan integrasi PyMuPDF untuk proses *parsing* file akademik (*server-side*).
 - **Database & Auth:** Supabase (PostgreSQL) dengan penerapan *Row Level Security* (RLS) untuk isolasi data pengguna secara aman.
 - **AI Integrations:** LLM API (Google Gemini / OpenAI).
+
+## 5. Karakteristik Pengguna & Hak Akses (Actors)
+Sistem PahaMIn memiliki target pengguna spesifik dengan batasan hak akses berikut:
+- **Pengguna Reguler (Mahasiswa):** Memiliki hak akses penuh untuk membuat dan memindahkan tugas pada Matriks Eisenhower, mengunggah dokumen PDF, membaca ringkasan AI, dan mengerjakan kuis. Pengguna hanya dapat melihat dan memodifikasi datanya sendiri (diisolasi oleh *Row Level Security*).
+- **Administrator Sistem (Developer/Calvin):** Tidak memiliki antarmuka khusus di dalam aplikasi. Pengelolaan data tingkat lanjut, pemantauan *traffic*, dan manajemen *storage* dilakukan langsung melalui dasbor *backend* Supabase.
+
+## 6. Lingkungan Operasi (Operating Environment)
+Aplikasi PahaMIn beroperasi dengan spesifikasi lingkungan sebagai berikut:
+- **Platform Aplikasi:** Berbasis Web (*Web-based Application*).
+- **Dukungan Peramban (Browser):** Google Chrome, Mozilla Firefox, Apple Safari, dan Microsoft Edge versi terbaru (mendukung fitur CSS Grid dan *drag-and-drop* API).
+- **Resolusi & Aksesibilitas Layar:** 
+  - **Desktop/Tablet (Optimal):** Layar dengan resolusi minimal 1024px direkomendasikan untuk pengalaman interaksi *drag-and-drop* 4 kuadran Matriks Eisenhower yang maksimal.
+  - **Mobile (Fungsional):** Antarmuka Matriks akan merespons menjadi tata letak vertikal (*stacked*) pada layar di bawah 768px untuk menjaga keterbacaan, meskipun *drag-and-drop* akan dibatasi fungsinya menjadi tombol *tap-to-move*.
+
+## 7. Batasan Sistem & Aturan Bisnis (System Constraints)
+Untuk menjaga stabilitas peladen, mengontrol biaya API LLM, dan mencegah kegagalan sistem, PahaMIn menetapkan batasan masukan berikut:
+- **Batas Unggah Dokumen (Ruang Paham):** 
+  - Format file yang diizinkan secara eksklusif hanya ekstensi `.pdf`.
+  - Ukuran maksimal dokumen yang diunggah dibatasi **5 Megabyte (MB)** per file.
+  - Batas ekstraksi teks maksimal adalah **20 halaman** pertama dari dokumen untuk mencegah *overload* batas token (*token limit*) pada model API Google Gemini / OpenAI.
+- **Ketersediaan Offline:** Sistem tidak mendukung mode *offline*. Pengguna memerlukan koneksi internet aktif untuk memuat Matriks dan memproses PDF ke peladen FastAPI.
+
+## 8. Kebutuhan Data Konseptual (Conceptual Data Requirements)
+Skema basis data PahaMIn memetakan entitas relasional utama berikut untuk disimpan dalam PostgreSQL (Supabase):
+1. **Entitas `Users` (Profil):** Menyimpan `user_id` (UUID), alamat email, *streak* harian, dan akumulasi poin atau metrik penyelesaian kuis.
+2. **Entitas `Tasks` (Matriks):** Menyimpan `task_id`, `user_id` (Foreign Key), `title` (Nama tugas), `quadrant` (Status letak kuadran: 1, 2, 3, atau 4), dan `created_at`.
+3. **Entitas `Documents` (Ruang Paham):** Menyimpan `doc_id`, `user_id`, `file_name`, `summary_text` (Hasil ringkasan AI dalam format JSON atau Teks), dan penanda waktu.
+4. **Entitas `Quiz_Results`:** Menyimpan `quiz_id`, `doc_id` (referensi ke dokumen), `score` (Nilai dari 0-100), dan jawaban salah/benar untuk keperluan analitik belajar mahasiswa.
+
+## 9. Antarmuka Eksternal (External Interfaces)
+- **API Model Bahasa (LLM):** Komunikasi *outbound* dari FastAPI ke Google Gemini/OpenAI API menggunakan protokol HTTPS dengan transmisi data berupa teks instruksi (*prompt*) dan respons berformat JSON.
+- **Cloud Storage:** Penyimpanan fisik file PDF diintegrasikan langsung menggunakan Supabase Storage (S3-compatible) sebelum diproses oleh PyMuPDF.
