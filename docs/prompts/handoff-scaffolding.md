@@ -11,7 +11,8 @@ Kamu adalah AI agent untuk proyek **PahaMIn** (tim INTERCORP). Proyek ini adalah
 2. `C:\Users\Lenov\pahamin\docs\project-requirements.md` — PRD lengkap (fungsional, non-fungsional, batasan sistem, data).
 3. `C:\Users\Lenov\pahamin\docs\CONTEKST_PROYEK.md` — konteks, pembagian peran tim, dan jadwal SCRUM (Sprint 0–3).
 4. `C:\Users\Lenov\pahamin\docs\UI_DESIGN_REFERENCE.md` dan `C:\Users\Lenov\pahamin\docs\design-reference\figma-exports\` — UI/UX PahaMIn yang sudah dirancang di Figma dan menjadi acuan visual wajib. Jangan mulai ulang desain UI.
-5. `C:\Users\Lenov\pahamin\docs\prompts\` — seluruh prompt peran (api-designer, task-breakdown, dll). Gunakan prompt peran yang relevan jika pengguna meminta output dalam format peran tersebut.
+5. `C:\Users\Lenov\pahamin\docs\prompts\README.md` — tata cara memilih prompt peran, menyiapkan brief, dan memeriksa hasil AI.
+6. `C:\Users\Lenov\pahamin\docs\prompts\` — seluruh prompt peran. Baca prompt yang sesuai dengan pekerjaan yang diminta.
 
 ## Perubahan scope terbaru (keputusan tim — PERHATIKAN, dokumentasi & aturan sudah disinkronkan)
 1. **Fitur Kuis AI DIHAPUS** — tabel `quiz_results` dan seluruh UI/endpoint kuis tidak lagi diperlukan.

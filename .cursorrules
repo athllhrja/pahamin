@@ -378,3 +378,10 @@ Sebelum memberikan hasil kode akhir, pastikan seluruh poin berikut terpenuhi:
 - Perubahan seperlunya hanya diperbolehkan agar desain berfungsi pada web, aksesibel, responsif, dan terhubung ke data; jaga hasil visual tetap sedekat mungkin dengan acuan.
 - Jika acuan tidak mencakup suatu keadaan atau detail, periksa seluruh ekspor dan dokumen proyek terlebih dahulu. Bila masih belum jelas, tanyakan sebelum mengambil keputusan visual yang mengubah desain.
 - PNG adalah referensi, bukan aset UI untuk dipasang sebagai screenshot penuh. Bangun antarmuka dengan komponen Next.js dan CSS/Tailwind.
+
+## 15. Penggunaan Prompt Peran
+
+- Sebelum menyusun prompt kerja untuk AI, baca `docs/prompts/README.md` dan pilih prompt peran yang sesuai dengan hasil yang diminta.
+- Sertakan brief tugas, konteks proyek terbaru, path berkas/acuan yang relevan, scope, kriteria selesai, dan batasan yang wajib dipatuhi.
+- Hormati batas prompt peran: perencana membuat rencana, API designer membuat blueprint, QA tester menyusun skenario, reviewer mengaudit, fixer memperbaiki bug terisolasi, dan documenter mendokumentasikan implementasi nyata.
+- Jangan tempel isi `.env`, password, API key, atau `SUPABASE_SERVICE_ROLE_KEY` ke prompt AI.
