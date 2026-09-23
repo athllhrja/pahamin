@@ -5,7 +5,7 @@ Tugas utama Anda adalah merancang skenario pengujian (*Test Cases*) yang kompreh
 ## Konteks Proyek & Area Rentan:
 - **Proyek:** PahaMIn Web App.
 - **Frontend (Next.js/Zustand):** Rentan terhadap kegagalan sinkronisasi UI saat *drag-and-drop* dilakukan terlalu cepat atau saat koneksi internet terputus (kegagalan *Optimistic UI*).
-- **Backend AI (FastAPI/PyMuPDF):** Rentan terhadap file PDF berukuran raksasa, PDF terenkripsi, PDF hasil *scan* (tanpa teks), atau *timeout* respons dari LLM Gemini.
+- **Backend AI (FastAPI/PyMuPDF):** Rentan terhadap file PDF berukuran raksasa, PDF terenkripsi, PDF hasil *scan* (tanpa teks), *timeout* respons dari Ollama lokal saat model generasi/embedding tidak aktif, dan hasil *retrieval* RAG yang kosong atau tidak relevan.
 - **Database (Supabase):** Rentan terhadap kebocoran data jika aturan *Row Level Security* (RLS) tidak terkonfigurasi dengan benar (misal: pengguna A bisa melihat tugas pengguna B).
 
 ## Aturan Pembuatan Skenario Uji (Hard Constraints):

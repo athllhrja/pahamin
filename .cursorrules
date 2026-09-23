@@ -89,12 +89,13 @@ Aturan wajib:
 
 ### 2.2 Backend AI Engine — FastAPI
 
-Backend AI digunakan **KHUSUS** untuk fitur Ruang Paham, meliputi:
+Backend AI digunakan **KHUSUS** untuk fitur Ruang Paham (RAG Chatbot), meliputi:
 
-- Ekstraksi teks dari PDF.
-- Pemrosesan materi pembelajaran.
-- Prompting ke LLM.
-- Pembuatan kuis AI.
+- Ekstraksi teks dari PDF (PyMuPDF).
+- Pemecahan teks menjadi *chunks* dan pembuatan embedding.
+- Penyimpanan vektor embedding di Supabase pgvector.
+- Pencarian semantik (*similarity search*) berdasarkan pertanyaan pengguna.
+- Prompting ke LLM lokal (Ollama).
 
 Aturan wajib:
 
@@ -183,41 +184,29 @@ Alur drag-and-drop wajib menggunakan pendekatan **Optimistic UI**:
 
 ---
 
-## 6. Fitur Ruang Paham — PDF dan AI
+## 6. Fitur Ruang Paham — RAG Chatbot (PDF dan AI)
 
 ### 6.1 Pemrosesan PDF
 
 - Pemrosesan PDF wajib dilakukan di backend FastAPI.
 - Gunakan **PyMuPDF (`fitz`)** untuk ekstraksi teks.
 - Dilarang melakukan parsing PDF di browser client.
+- Batas ekstraksi maksimal **20 halaman** pertama dokumen.
 
-### 6.2 Performa
+### 6.2 Pipeline RAG
+
+- Teks hasil ekstraksi wajib dipecah menjadi *chunks* berukuran **±500 token** dengan overlap **50 token**.
+- Setiap *chunk* wajib di-embed menggunakan model embedding Ollama **`nomic-embed-text`**.
+- Vektor embedding disimpan di Supabase **pgvector** pada tabel `document_chunks`.
+- Saat pengguna bertanya, pertanyaan di-embed lalu dilakukan *similarity search* untuk mengambil **maksimal 5 *chunks*** terdekat.
+- *Chunks* relevan digabungkan dengan pertanyaan menjadi *prompt* dan dikirim ke model chat Ollama (**qwen 3.6**).
+- Riwayat percakapan wajib disimpan di tabel `chat_messages` pada Supabase.
+
+### 6.3 Performa
 
 - Target waktu respons AI adalah di bawah 10 detik.
 - Frontend wajib menampilkan loading state interaktif selama menunggu respons dari FastAPI.
-
-### 6.3 Endpoint Kuis AI
-
-Endpoint kuis AI wajib memaksa LLM untuk mengembalikan schema baku.
-
-Contoh format respons:
-
-```json
-{
-  "questions": [
-    {
-      "q": "Pertanyaan kuis",
-      "options": [
-        "A",
-        "B",
-        "C",
-        "D"
-      ],
-      "answer": "A"
-    }
-  ]
-}
-```
+- LLM berjalan lokal (Ollama); seluruh operasi AI wajib melewati FastAPI.
 
 ---
 
@@ -229,7 +218,7 @@ Secret hanya boleh digunakan di server.
 
 Secret berikut **TIDAK BOLEH** dikirim atau diakses oleh Client Components:
 
-- `GEMINI_API_KEY`
+- Konfigurasi endpoint/model Ollama (`OLLAMA_HOST`).
 - Rahasia JWT.
 - `SUPABASE_SERVICE_ROLE_KEY`
 
@@ -242,6 +231,11 @@ Secret berikut **TIDAK BOLEH** dikirim atau diakses oleh Client Components:
   - Menghapus datanya sendiri.
 
 Akses data harus dibatasi berdasarkan `auth.uid()`.
+
+### 7.3 pgvector
+
+- Ekstensi `vector` (pgvector) wajib diaktifkan pada project Supabase.
+- Tabel `document_chunks` menyimpan kolom vektor embedding dan wajib memiliki indeks vektor agar *similarity search* tetap cepat.
 
 ---
 
@@ -376,3 +370,11 @@ Sebelum memberikan hasil kode akhir, pastikan seluruh poin berikut terpenuhi:
 - [ ] RLS aktif pada seluruh tabel Supabase.
 - [ ] Error ditangani, dicatat, dan ditampilkan melalui Sonner.
 - [ ] File `.tsx` dan fungsi Python tidak melebihi 200 baris tanpa dipecah.
+
+## 14. UI/UX Figma sebagai Acuan Produk
+
+- Desain UI/UX PahaMIn sudah tersedia dan wajib menjadi acuan visual utama. Baca `docs/UI_DESIGN_REFERENCE.md` dan gunakan ekspor layar di `docs/design-reference/figma-exports/` sebelum membangun atau mengubah halaman.
+- Jangan membuat ulang UI, mengganti arah visual, atau menambahkan pola desain baru dari nol. Implementasikan layout, warna, tipografi, komponen, ikon, dan interaksi yang tampak pada acuan.
+- Perubahan seperlunya hanya diperbolehkan agar desain berfungsi pada web, aksesibel, responsif, dan terhubung ke data; jaga hasil visual tetap sedekat mungkin dengan acuan.
+- Jika acuan tidak mencakup suatu keadaan atau detail, periksa seluruh ekspor dan dokumen proyek terlebih dahulu. Bila masih belum jelas, tanyakan sebelum mengambil keputusan visual yang mengubah desain.
+- PNG adalah referensi, bukan aset UI untuk dipasang sebagai screenshot penuh. Bangun antarmuka dengan komponen Next.js dan CSS/Tailwind.

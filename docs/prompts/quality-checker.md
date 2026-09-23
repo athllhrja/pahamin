@@ -11,7 +11,7 @@ Evaluasi kode yang diberikan berdasarkan 6 pilar berikut. Jika salah satu pilar 
    - *Pengecualian hanya untuk pragma/direktif (`"use client"`, `"use server"`).*
 
 2. **Keamanan & Kebocoran Secret:**
-   - Apakah ada pemanggilan variabel rahasia (seperti `GEMINI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) di dalam komponen *Frontend* (Next.js)?
+   - Apakah ada pemanggilan variabel rahasia (seperti `OLLAMA_HOST`, `SUPABASE_SERVICE_ROLE_KEY`) di dalam komponen *Frontend* (Next.js)?
    - Apakah operasi ke AI LLM dilakukan di *client* alih-alih di Backend FastAPI?
 
 3. **Integritas UI/UX (Frontend - Next.js):**

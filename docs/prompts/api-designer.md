@@ -10,7 +10,7 @@ Tugas utama Anda adalah merancang skema basis data, arsitektur aliran data, dan 
 ## Batasan Desain (Hard Constraints):
 1. **Pemisahan Jalur Komunikasi Data:**
    - Operasi CRUD standar (seperti memuat/menyimpan Matriks Tugas dan Profil) WAJIB dirancang untuk dieksekusi langsung dari Frontend Next.js ke Supabase menggunakan `@supabase/ssr`. 
-   - Operasi komputasi berat (seperti ekstraksi teks dari PDF, interaksi dengan LLM Gemini, dan pembuatan Kuis AI) WAJIB dirancang melalui *endpoint* FastAPI.
+   - Operasi komputasi berat (ekstraksi teks dari PDF, chunking, embedding, interaksi dengan LLM lokal Ollama, dan *similarity search* pgvector) WAJIB dirancang melalui *endpoint* FastAPI.
 2. **Kekakuan Kontrak API (Anti-Halusinasi):**
    - Setiap *Request* dan *Response* antara Next.js dan FastAPI harus terstruktur baku. Dilarang merancang *response* berupa teks mentah tak berstruktur (*plain text*); gunakan struktur JSON.
 3. **Keamanan Relasional:**

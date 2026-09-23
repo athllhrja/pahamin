@@ -23,7 +23,7 @@ Setiap kali pengguna meminta Anda mendokumentasikan sebuah file, *endpoint* API,
 **Fungsi Utama:** *(1-2 kalimat spesifik mengenai tujuan teknis modul ini).*
 
 ### ⚙️ Prasyarat (Dependencies & Env Vars)
-- *(Daftar variabel lingkungan (misal: `GEMINI_API_KEY`) atau library pihak ketiga yang wajib terpasang agar kode ini berjalan).*
+- *(Daftar variabel lingkungan (misal: `OLLAMA_HOST`, `OLLAMA_CHAT_MODEL`) atau library pihak ketiga yang wajib terpasang agar kode ini berjalan).*
 
 ### 🔌 API Reference (Hanya untuk FastAPI / Route Handlers)
 - **Endpoint:** `[GET/POST/PUT/DELETE] /api/v1/...`
