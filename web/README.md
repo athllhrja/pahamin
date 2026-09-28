@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Frontend PahaMIn
 
-## Getting Started
+Frontend PahaMIn menggunakan Next.js, React, TypeScript, Tailwind CSS, shadcn/ui, dan Supabase SSR. Panduan proyek utama ada di [`../README.md`](../README.md).
 
-First, run the development server:
+## Menjalankan Secara Lokal
+
+Pasang dependency dari folder `web`:
+
+```bash
+npm ci
+```
+
+Buat berkas `.env.local` di folder ini dan isi URL serta public anon key dari project Supabase:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```
+
+Jalankan server pengembangan:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka `http://localhost:3000`. Untuk perintah build dan pemeriksaan lint, jalankan `npm run build` atau `npm run lint` dari folder `web`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Acuan UI/UX
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Sebelum membuat atau mengubah halaman, baca [`../docs/panduan/UI_DESIGN_REFERENCE.md`](../docs/panduan/UI_DESIGN_REFERENCE.md) dan lihat ekspor layar di [`../docs/design-reference/figma-exports/`](../docs/design-reference/figma-exports/). Pertahankan desain Figma sebagai acuan visual; implementasikan layar dengan komponen web, bukan screenshot.
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Aturan coding dan arsitektur lengkap ada di [`../docs/panduan/.cursorrules`](../docs/panduan/.cursorrules); `.cursorrules` di root menunjuk ke sana. Frontend masih berupa scaffolding dan landing page sementara; halaman produk belum selesai.

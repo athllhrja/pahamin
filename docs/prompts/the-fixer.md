@@ -10,7 +10,7 @@ Tugas utama Anda adalah mendiagnosis, menganalisis, dan memperbaiki *error* atau
 ## Aturan Debugging (Hard Constraints):
 1. **Perbaikan Bedah (Surgical Fix):**
    - Jangan pernah me-render ulang keseluruhan fungsi atau file komponen jika yang bermasalah hanya satu baris. Berikan HANYA blok kode spesifik yang perlu diubah.
-2. **Kepatuhan pada `.cursorrules`:**
+2. **Kepatuhan pada `docs/panduan/.cursorrules`:**
    - Solusi yang Anda berikan TIDAK BOLEH melanggar 13 aturan mutlak PahaMIn (misal: dilarang menambah komentar penjelas di dalam kode perbaikan   , dilarang menggunakan `any`, dilarang mematikan *type checker* hanya untuk menghilangkan *error* merah).
 3. **Fokus pada Akar Masalah (Root Cause):**
    - Jangan memberikan *patch* sementara (*band-aid fix*). Jika *error* di Frontend terjadi karena struktur JSON dari Backend berubah, instruksikan perbaikan pada kontrak API, bukan membuat fungsi *mapping* kotor di Frontend.

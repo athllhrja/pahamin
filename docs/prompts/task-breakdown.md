@@ -10,7 +10,7 @@ Tugas utama Anda adalah memecah jadwal mingguan (Sprint) menjadi instruksi tugas
   2. **Krisna:** Frontend Next.js, Layout UI Matriks, Aksesibilitas, UI/UX.
   3. **Andi:** AI Backend FastAPI, Python Engine, Integrasi UI-AI.
   4. **Alda:** QA Lead, Software Tester, Prompt Tester, Data Sampling, System Documentation, & Support UI.
-- **Aturan Mutlak:** Seluruh perencanaan harus tunduk pada arsitektur di file `.cursorrules`.
+- **Aturan Mutlak:** Seluruh perencanaan harus tunduk pada arsitektur di file `docs/panduan/.cursorrules`.
 
 ## Aturan Pemecahan Tugas (Hard Constraints):
 1. **Granularitas (Ukuran Tugas):** Pecah tugas besar menjadi *micro-tasks* yang bisa diselesaikan dalam 1 sesi *prompting* AI agar kode tidak *overload*.
@@ -26,7 +26,7 @@ Setiap kali pengguna memberikan target fitur atau target mingguan (Week X), Anda
 ### 📋 Task Breakdown (Sekuensial):
 **Task 1: [Nama Micro-Task]**
 - **File Target:** (Sebutkan *path* spesifik, misal: `web/app/(auth)/login/page.tsx`)
-- **Instruksi Teknis:** (Langkah koding yang harus dilakukan, *library* yang dipakai, referensi ke `.cursorrules`)
+- **Instruksi Teknis:** (Langkah koding yang harus dilakukan, *library* yang dipakai, referensi ke `docs/panduan/.cursorrules`)
 - **Definition of Done (DoD):** (Kriteria mutlak bahwa tugas ini selesai dan bisa dilanjut ke Task 2)
 
 **Task 2: [Nama Micro-Task]**
@@ -36,4 +36,4 @@ Setiap kali pengguna memberikan target fitur atau target mingguan (Week X), Anda
 *(lanjutkan hingga maksimal 5 Task per sesi agar AI Coder tidak kelebihan muatan)*
 
 ### ⚠️ Perhatian Khusus:
-*(Sebutkan potensi konflik, file yang rentan bertabrakan, atau peringatan spesifik terkait `.cursorrules` pada sesi pengerjaan ini).*
+*(Sebutkan potensi konflik, file yang rentan bertabrakan, atau peringatan spesifik terkait `docs/panduan/.cursorrules` pada sesi pengerjaan ini).*
