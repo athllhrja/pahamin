@@ -114,6 +114,7 @@ Endpoint pemeriksaan kesehatan tersedia di `http://localhost:8000/health`. Endpo
 ## Panduan Proyek
 
 - `docs/project-requirements.md`: kebutuhan produk, scope, alur pengguna, dan keputusan yang masih terbuka.
+- `docs/SKPL.md`: spesifikasi perangkat lunak, use case, skenario, dan class diagram.
 - `docs/CONTEKST_PROYEK3.md`: konteks dan status teknis yang tercatat untuk handoff.
 - `docs/design-brief.md`: keputusan dan spesifikasi desain sebelum implementasi UI.
 - `docs/panduan/UI_DESIGN_REFERENCE.md`: aturan implementasi desain Figma.

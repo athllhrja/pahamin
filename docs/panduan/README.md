@@ -11,6 +11,7 @@ Folder ini mengumpulkan panduan kerja tim, acuan desain, dan aturan coding PahaM
 
 ## Referensi Proyek
 
+- [SKPL / SRS](../SKPL.md): kebutuhan perangkat lunak, diagram use case, skenario, dan class diagram.
 - [Konteks proyek terbaru](../CONTEKST_PROYEK3.md): status teknis, pembagian tim, keputusan, dan rencana sprint yang tercatat.
 - [Product Requirements Document](../project-requirements.md): kebutuhan produk, scope, alur, dan keputusan terbuka.
 - [Design brief](../design-brief.md): prinsip, token visual, layar, komponen, state, responsive behaviour, dan aksesibilitas.
