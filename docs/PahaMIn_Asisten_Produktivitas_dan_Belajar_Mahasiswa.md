@@ -108,11 +108,3 @@ Karena demo hanya melalui **localhost**, tampilan mobile dapat diuji lewat mode 
 | Desain dan dokumentasi | Figma (UI/UX), Mermaid (diagram), Markdown |
 | Pengujian dan keamanan | `npm audit`, `pip-audit`, `nmap`, `curl`, pemindaian rahasia pada repositori |
 | Perangkat demo | Lenovo IdeaPad Gaming 3 15ACH6 (Ryzen 5 5600H) |
-
-## Penyesuaian dari teks Anda
-
-- Saya mengganti "jawaban instan" menjadi "jawaban". Target di SKPL adalah median ≤ 10 detik, jadi kata "instan" bisa dipertanyakan penguji.
-- Saya menulis "dirancang agar tidak mengarang", bukan "dilarang mengarang". Itu sebuah mekanisme (ambang kemiripan dan instruksi prompt) yang diuji dengan kriteria minimal 9 dari 10 pertanyaan di luar materi. Itu bukan jaminan mutlak.
-- Saya menambahkan "pertama" pada "20 halaman", karena yang diproses adalah 20 halaman pertama.
-
-Kalau perlu, saya bisa simpan teks gabungan ini sebagai file Markdown atau Word.
