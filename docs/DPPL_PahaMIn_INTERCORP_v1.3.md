@@ -26,7 +26,6 @@ Telkom University Surabaya
 |---|---|---|---|
 | 1.0 | 6 Oktober 2026 | Penyusunan awal DPPL | Disesuaikan dengan scope PahaMIn terbaru |
 | 1.1 | 7 Oktober 2026 | Revisi bagian A: realisasi keputusan desain dari SKPL (model AI, spesifikasi RAG, struktur modul, API, error handling, performa, antarmuka, administrasi teknis) | Menunggu ACC tim |
-
 | 1.2 | 7 Oktober 2026 | Revisi bagian B: duplikasi dengan SKPL v1.2 dihapus (lingkup, aturan Eisenhower, batasan, angka batas unggahan, kewajiban autentikasi); DPPL merujuk SKPL lewat ID dan hanya memuat mekanisme; parameter batas dipusatkan pada konfigurasi; model generasi dikosongkan menunggu SKPL TL-02 | Bagian A dianggap disetujui |
 | 1.3 | 7 Oktober 2026 | Revisi bagian C: keputusan desain DD-01 s.d. DD-05 diputuskan; ERD dan kamus data diselaraskan dengan SKPL v1.2; RLS dan kebijakan Storage dilengkapi; sequence diagram UML ditambahkan; Bab 8 (Jaringan) diperluas; kontrol keamanan tambahan (7.6); konvensi penamaan; traceability disusun ulang berbasis ID | Menunggu ACC tim |
 
