@@ -5,116 +5,334 @@
 | Nama sistem | PahaMIn |
 | Tim | INTERCORP |
 | Jenis dokumen | SKPL / Software Requirements Specification |
-| Versi | 1.0 |
+| Versi | 1.3 |
 | Status | Rancangan untuk review tim |
-| Tanggal | 1 Oktober 2026 |
-| Acuan kebutuhan utama | [`project-requirements.md`](project-requirements.md) |
+| Tanggal | 7 Oktober 2026 |
+| Acuan kebutuhan utama | [`project-requirements.md`](project-requirements.md) (PRD) |
 
-Dokumen ini memformalkan kebutuhan perangkat lunak, diagram use case, skenario, dan model kelas PahaMIn untuk keperluan pengembangan serta review akademik. PRD tetap menjadi sumber utama scope produk. Jika ada perbedaan, keputusan terbaru yang disetujui pada PRD mengungguli dokumen ini.
+### Riwayat Revisi
+
+| Versi | Tanggal | Perubahan |
+|---|---|---|
+| 1.0 | 1 Oktober 2026 | Penyusunan awal |
+| 1.1 | 7 Oktober 2026 | Kebutuhan dipecah menjadi atomik dengan ID baru dan metode verifikasi; NFR keamanan dan jaringan dibuat terukur; aktor dirapikan; use case dilengkapi; detail desain (library, class layanan) dikeluarkan ke DPPL; keputusan terbuka dikumpulkan dalam satu daftar dengan rekomendasi bawaan |
+| 1.2 | 7 Oktober 2026 | Seluruh keputusan KD diputuskan memakai rekomendasi bawaan; perangkat referensi (Lenovo IdeaPad Gaming 3 15ACH6, Ryzen 5 5600H) dan lingkungan demo (hanya localhost) ditetapkan; status kebutuhan terkait berubah dari Draf menjadi Final; tenggat tugas dikeluarkan dari lingkup demo; ditambahkan temuan kelayakan model AI pada perangkat referensi |
+| 1.3 | 7 Oktober 2026 | Keputusan desain DD-01 s.d. DD-05 dicatat sebagai diputuskan pada DPPL v1.3; NFR-SEC-03 menjadi Final |
+
+PRD tetap menjadi sumber utama scope produk. Jika ada perbedaan, keputusan terbaru yang disetujui pada PRD mengungguli dokumen ini.
+
+## Daftar Isi
+
+1. [Pendahuluan](#1-pendahuluan)
+2. [Deskripsi Umum](#2-deskripsi-umum)
+3. [Aturan Bisnis](#3-aturan-bisnis)
+4. [Kebutuhan Fungsional](#4-kebutuhan-fungsional)
+5. [Kebutuhan Nonfungsional](#5-kebutuhan-nonfungsional)
+6. [Use Case](#6-use-case)
+7. [Model Domain](#7-model-domain)
+8. [Keputusan](#8-keputusan)
+9. [Traceability](#9-traceability)
+
+---
 
 ## 1. Pendahuluan
 
 ### 1.1 Tujuan
 
-SKPL ini menjadi acuan bagi pengembang, QA, dan reviewer dalam memahami kemampuan yang perlu disediakan PahaMIn, batas sistem, interaksi eksternal, serta data konseptualnya.
+SKPL ini menjadi acuan bagi pengembang, QA, dan reviewer tentang **apa** yang harus disediakan PahaMIn, batas sistem, dan cara memverifikasinya. **Bagaimana** sistem dibangun (arsitektur, skema, library, parameter) ada di DPPL.
 
 ### 1.2 Lingkup
 
-PahaMIn adalah aplikasi web untuk membantu mahasiswa mengelola prioritas tugas menggunakan Matriks Eisenhower dan memahami materi melalui Ruang Paham. Ruang Paham memproses PDF dan menyediakan ringkasan serta tanya jawab berbasis Retrieval-Augmented Generation (RAG).
+PahaMIn adalah aplikasi web untuk membantu mahasiswa mengelola prioritas tugas dengan Matriks Eisenhower dan memahami materi melalui Ruang Paham. Ruang Paham memproses PDF dan menyediakan ringkasan serta tanya jawab berbasis Retrieval-Augmented Generation (RAG). Aplikasi ditujukan untuk tugas akademik dan demonstrasi lokal.
 
-UI/UX sudah tersedia di Figma. Implementasi web harus mengikuti desain tersebut dan ekspor layar yang diberikan tim; dokumen ini tidak meminta pembuatan ulang UI.
+UI/UX sudah tersedia di Figma. Implementasi mengikuti desain tersebut; dokumen ini tidak meminta pembuatan ulang UI.
 
 ### 1.3 Istilah
 
 | Istilah | Arti |
 |---|---|
 | SKPL / SRS | Spesifikasi Kebutuhan Perangkat Lunak |
-| Matriks Eisenhower | Pengelompokan tugas menurut urgensi dan kepentingan ke empat kuadran |
-| RAG | Retrieval-Augmented Generation; pembuatan jawaban dengan mengambil konteks relevan dari dokumen |
-| Chunk | Potongan teks dokumen yang diindeks dan digunakan untuk retrieval |
-| RLS | Row Level Security, kebijakan database untuk membatasi akses baris berdasarkan pengguna |
-| Ollama | Runtime model lokal untuk embedding dan generasi jawaban |
+| Matriks Eisenhower | Pengelompokan tugas ke empat kuadran menurut urgensi dan kepentingan |
+| RAG | Retrieval-Augmented Generation: jawaban dibuat dengan mengambil konteks relevan dari dokumen |
+| Potongan (chunk) | Bagian teks dokumen yang diindeks dan dipakai untuk pencarian |
+| RLS | Row Level Security, pembatasan akses baris data berdasarkan pengguna |
+| JWT | Token sesi yang dipakai untuk mengidentifikasi pengguna pada permintaan |
+| Perangkat referensi | Mesin tempat pengukuran kinerja dan demo dilakukan (lihat ASM-04) |
+
+### 1.4 Konvensi Penulisan Kebutuhan
+
+- **ID:** `FR-<GRUP>-<NN>` untuk fungsional, `NFR-<GRUP>-<NN>` untuk nonfungsional. Grup mengikuti PRD: `AUTH`, `TASK`, `DOC`, `SUM`, `CHAT`, `PROF`, `SET`, `UI`; NFR: `PERF`, `SEC`, `NET`, `UX`, `REL`, `PRV`. ID tidak dipakai ulang; kebutuhan yang dihapus ditandai dihapus, bukan diganti nomornya.
+- **Atomik:** satu ID menyatakan satu perilaku yang dapat diuji.
+- **Prioritas:** Must (wajib untuk demo), Should (diharapkan), Could (bila waktu cukup).
+- **Status:** **Final** = isi sudah diputuskan. **Draf (KD-xx)** = bergantung pada keputusan terbuka pada Bab 8, atau memuat angka usulan yang perlu dikonfirmasi.
+- **Verifikasi:** **U** = uji, **I** = inspeksi (kode/konfigurasi/dokumen), **D** = demonstrasi, **A** = analisis/pengukuran.
+- **Aturan keputusan:** setiap kebutuhan Must berstatus Draf memiliki *rekomendasi bawaan* pada Bab 8. Jika tim tidak memutuskan sampai batas yang ditetapkan, rekomendasi bawaan berlaku.
+
+---
 
 ## 2. Deskripsi Umum
 
-### 2.1 Pengguna dan Aktor
+### 2.1 Pemangku Kepentingan dan Aktor
 
-- **Mahasiswa:** aktor utama yang mengelola tugas, PDF, percakapan, dan profil miliknya.
-- **Supabase Auth:** sistem eksternal yang memvalidasi sesi dan identitas pengguna.
-- **Supabase PostgreSQL, pgvector, dan Storage:** layanan eksternal untuk menyimpan data, embedding, dan file sesuai kepemilikan.
-- **Ollama lokal:** layanan model untuk embedding, ringkasan, dan jawaban chat.
-- **Administrator teknis:** anggota tim pengembang yang mengelola infrastruktur melalui dashboard Supabase dan lingkungan pengembangan. Tidak ada antarmuka administrator di dalam produk.
+| Pihak | Peran |
+|---|---|
+| **Mahasiswa** | Satu-satunya aktor pengguna sistem: mengelola tugas, PDF, percakapan, dan profil miliknya. |
+| Administrator teknis (anggota tim) | Pemangku kepentingan di luar produk: mengelola infrastruktur lewat dashboard layanan dan lingkungan pengembangan. Tidak ada antarmuka administrator di dalam produk. |
 
-### 2.2 Lingkungan dan Arsitektur
+### 2.2 Sistem Eksternal
 
-- **Frontend:** Next.js, React, TypeScript, Tailwind CSS v4, shadcn/ui, dan Supabase SSR.
-- **Backend AI:** FastAPI, Python, Pydantic, dan PyMuPDF.
-- **Data, autentikasi, dan penyimpanan:** Supabase PostgreSQL, Supabase Auth, Supabase Storage, RLS, dan pgvector.
-- **AI lokal:** Ollama `qwen 3.6` untuk chat/ringkasan dan `nomic-embed-text` untuk embedding.
-- CRUD umum tugas dan profil dilakukan melalui frontend ke Supabase. Ekstraksi PDF serta pemrosesan AI harus melewati FastAPI.
+Layanan berikut adalah **komponen/ketergantungan**, bukan aktor.
 
-Google Gemini dan generator kuis tidak termasuk arsitektur maupun scope produk saat ini. Fitur kuis telah dihapus dari scope.
+| Layanan | Kebutuhan terhadap layanan |
+|---|---|
+| Supabase Auth | Identitas, sesi, dan token pengguna |
+| Supabase PostgreSQL + pgvector | Penyimpanan data aplikasi dan pencarian kemiripan vektor, dengan RLS |
+| Supabase Storage | Penyimpanan file PDF milik pengguna |
+| Ollama (lokal) | Pembuatan representasi vektor, ringkasan, dan jawaban |
 
 ### 2.3 Batasan
 
-1. Dokumen yang diterima hanya PDF, maksimal 5 MB per berkas.
-2. Sistem memproses maksimal 20 halaman pertama.
-3. Chunking menargetkan sekitar 500 token dengan overlap sekitar 50 token.
-4. Retrieval menggunakan maksimal lima chunk relevan dari dokumen yang dipilih.
-5. Sistem tidak mendukung mode offline.
-6. Perilaku penghapusan, retensi dokumen, batas unggahan per akun, dan penyimpanan ringkasan masih perlu diputuskan.
+| ID | Batasan |
+|---|---|
+| BAT-01 | Berkas yang diterima hanya PDF, maksimal 5 MB per berkas. |
+| BAT-02 | Sistem memproses maksimal 20 halaman pertama setiap PDF. |
+| BAT-03 | Pemotongan teks menargetkan Â±500 token per potongan dengan overlap Â±50 token. |
+| BAT-04 | Pencarian konteks mengambil maksimal lima potongan dari dokumen yang dipilih. |
+| BAT-05 | Pemrosesan AI (vektor, ringkasan, jawaban) berjalan pada Ollama lokal, bukan layanan AI pihak ketiga. |
+| BAT-06 | Data aplikasi, autentikasi, dan file berada pada Supabase; pembatasan akses data memakai RLS. |
+| BAT-07 | Sistem tidak mendukung mode offline. |
 
-## 3. Kebutuhan Fungsional
+### 2.4 Asumsi dan Ketergantungan
 
-| ID | Prioritas | Kebutuhan |
-|---|---|---|
-| SKPL-F01 | Must | Pengguna dapat masuk dan keluar melalui metode autentikasi yang dipilih tim. Detail pendaftaran, verifikasi, dan pemulihan akun masih terbuka. |
-| SKPL-F02 | Must | Pengguna dapat membuat dan melihat tugas dengan judul, urgensi, serta kepentingan; sistem menentukan kuadran awal berdasarkan dua atribut tersebut. |
-| SKPL-F03 | Must | Pengguna dapat menandai tugas selesai dan memindahkan tugas antarkuadran. Perubahan disimpan; kegagalan simpan mengembalikan tampilan ke posisi sebelumnya dan menampilkan pesan. Pada layar kecil harus tersedia cara pemindahan yang tidak bergantung pada drag-and-drop. |
-| SKPL-F04 | Open | Pengeditan/penghapusan tugas, tenggat, klasifikasi manual, dan hubungan atribut urgensi/kepentingan setelah pemindahan harus disetujui sebelum dibangun. |
-| SKPL-F05 | Must | Pengguna dapat mengunggah PDF maksimal 5 MB. Sistem memvalidasi isi/format di backend, bukan hanya mempercayai nama file atau validasi browser. |
-| SKPL-F06 | Must | Backend mengekstrak maksimal 20 halaman pertama menggunakan PyMuPDF dan memberi status proses yang dapat dipahami pengguna. PDF rusak, terenkripsi, kosong, atau tanpa teks yang dapat diekstrak ditangani sebagai kegagalan terkontrol. |
-| SKPL-F07 | Must | Sistem memecah teks menjadi chunk sekitar 500 token dengan overlap sekitar 50 token, membuat embedding `nomic-embed-text`, dan menyimpan chunk/vektor dengan relasi ke dokumen pemilik. |
-| SKPL-F08 | Must | Pengguna dapat meminta ringkasan materi. Ringkasan dibuat melalui FastAPI dan Ollama; bentuk, panjang, serta apakah ringkasan disimpan permanen masih terbuka. |
-| SKPL-F09 | Must | Pengguna dapat mengajukan pertanyaan pada dokumen miliknya. Sistem melakukan retrieval maksimal lima chunk yang relevan dari dokumen tersebut dan menghasilkan jawaban dengan Ollama `qwen 3.6` berdasarkan konteks yang diambil. |
-| SKPL-F10 | Must | Jika konteks yang ditemukan tidak cukup, sistem menyatakan keterbatasan dan tidak mengarang jawaban. Riwayat pertanyaan dan jawaban disimpan terkait pengguna serta dokumen yang benar. |
-| SKPL-F11 | Must | Pengguna dapat melihat statistik profil yang berasal dari data miliknya. Definisi streak, zona waktu, dan hitungan dokumen perlu diputuskan sebelum implementasi statistik terkait. |
-| SKPL-F12 | Must | Halaman pengaturan dan bantuan mengikuti layar Figma yang tersedia. Perilaku tema, ukuran teks, bahasa, notifikasi, FAQ, laporan bug, dan feedback masih perlu ditetapkan. |
-| SKPL-F13 | Must | Sistem menyediakan status loading, sukses, kosong, dan error untuk alur utama tanpa menyimpang dari pola visual Figma. |
+| ID | Asumsi |
+|---|---|
+| ASM-01 | Pada perangkat demo, Ollama berjalan dan model yang dibutuhkan sudah terpasang. |
+| ASM-02 | Perangkat demo memiliki koneksi internet ke Supabase. |
+| ASM-03 | Desain Figma tersedia dan menjadi acuan tampilan. |
+| ASM-04 | **Perangkat referensi** untuk pengukuran kinerja dan demo: Lenovo IdeaPad Gaming 3 15ACH6 dengan CPU AMD Ryzen 5 5600H (6 core/12 thread). Seri ini umumnya memakai GPU NVIDIA GeForce RTX 3050 (4 GB VRAM) dan RAM 8 atau 16 GB; **GPU, RAM, dan versi OS pada mesin sebenarnya harus dikonfirmasi dan dicatat** sebelum pengukuran (lihat 8.3). |
+| ASM-05 | Demo dijalankan hanya pada mesin pengembang melalui localhost (KD-13). |
 
-## 4. Kebutuhan Nonfungsional
+### 2.5 Di Luar Lingkup
 
-| ID | Jenis | Kebutuhan |
-|---|---|---|
-| SKPL-NF01 | Keamanan | RLS aktif untuk seluruh data pengguna dan membatasi akses menggunakan identitas pemilik. FastAPI memvalidasi autentikasi serta kepemilikan dokumen pada setiap operasi AI. |
-| SKPL-NF02 | Kerahasiaan | `SUPABASE_SERVICE_ROLE_KEY`, konfigurasi Ollama, dan rahasia lain hanya digunakan di server dan tidak dikirim ke browser atau prompt AI pihak luar. |
-| SKPL-NF03 | Validasi | Input frontend divalidasi menggunakan Zod dan react-hook-form. Semua request FastAPI divalidasi dengan Pydantic. Validasi browser bukan batas keamanan. |
-| SKPL-NF04 | Performa | Target respons AI kurang dari 10 detik. Lingkungan, kondisi cold start, dan cara mengukur target harus disepakati sebelum hasil dianggap terverifikasi. |
-| SKPL-NF05 | Usability dan aksesibilitas | Layar mengikuti Figma, dapat digunakan dengan keyboard, menampilkan fokus yang jelas, serta tidak mengandalkan warna atau drag-and-drop sebagai satu-satunya cara memahami status/berinteraksi. |
-| SKPL-NF06 | Responsivitas | UI menyesuaikan layar desktop dan kecil. Pada lebar di bawah 768 px, matriks disusun vertikal dan pemindahan tugas mendukung sentuhan; detail breakpoint lainnya mengikuti review Figma. |
-| SKPL-NF07 | Keandalan | Kegagalan jaringan, database, storage, autentikasi, atau Ollama disampaikan tanpa membocorkan detail internal. Perubahan optimistik yang gagal disimpan harus dipulihkan. |
-| SKPL-NF08 | Privasi | PDF dan isi dokumen diperlakukan sebagai data pengguna. Instruksi di dalam dokumen tidak boleh mengganti instruksi sistem AI atau membuka data di luar dokumen yang diizinkan. |
+Deployment production dan multi-server; load balancing, Redis, dan message queue; login pihak ketiga (Google/Gmail OAuth); dashboard administrator di dalam produk; generator kuis; Google Gemini; mode offline; monitoring production tingkat lanjut.
 
-## 5. Use Case Diagram
+---
 
-Diagram berikut menunjukkan aktor dan use case yang termasuk scope terkini. Detail transport API, route, dan otorisasi antar layanan ditetapkan kemudian dalam rancangan teknis.
+## 3. Aturan Bisnis
+
+| ID | Aturan |
+|---|---|
+| BR-01 | **Kuadran Eisenhower** ditentukan dari dua atribut tugas: Mendesak=Ya & Penting=Ya â†’ *Lakukan*; Mendesak=Tidak & Penting=Ya â†’ *Jadwalkan*; Mendesak=Ya & Penting=Tidak â†’ *Delegasikan*; Mendesak=Tidak & Penting=Tidak â†’ *Abaikan*. |
+| BR-02 | Setiap data (tugas, dokumen, potongan, percakapan, profil) dimiliki satu pengguna dan hanya dapat diakses pemiliknya. |
+| BR-03 | Ringkasan dan tanya jawab hanya dapat digunakan pada dokumen berstatus **siap** (pemrosesan selesai). |
+| BR-04 | Jawaban hanya boleh didasarkan pada isi dokumen yang dipilih; bila tidak didukung dokumen, sistem menyatakan keterbatasan. |
+
+---
+
+## 4. Kebutuhan Fungsional
+
+### 4.1 Autentikasi (`AUTH`)
+
+| ID | Kebutuhan | Prioritas | Status | Verifikasi |
+|---|---|---|---|---|
+| FR-AUTH-01 | Pengguna dapat mendaftar akun dengan email dan kata sandi. | Must | Final | U |
+| FR-AUTH-02 | Pengguna terdaftar dapat masuk dengan email dan kata sandi yang benar. | Must | Final | U |
+| FR-AUTH-03 | Kredensial salah ditolak dengan pesan yang tidak mengungkapkan apakah email tersebut terdaftar. | Must | Final | U |
+| FR-AUTH-04 | Pengguna dapat keluar; setelah itu halaman dan data terlindungi tidak dapat diakses tanpa masuk kembali. | Must | Final | U |
+| FR-AUTH-05 | Pengguna tanpa sesi yang valid yang membuka halaman terlindungi diarahkan ke halaman masuk. | Must | Final | U |
+| FR-AUTH-06 | Sistem memverifikasi kepemilikan email saat pendaftaran. | Could | Final | U |
+| FR-AUTH-07 | Pengguna dapat memulihkan akun yang lupa kata sandi. | Could | Final | U |
+
+### 4.2 Matriks Tugas (`TASK`)
+
+| ID | Kebutuhan | Prioritas | Status | Verifikasi |
+|---|---|---|---|---|
+| FR-TASK-01 | Pengguna dapat membuat tugas dengan judul, urgensi (ya/tidak), dan kepentingan (ya/tidak). | Must | Final | U |
+| FR-TASK-02 | Judul tugas wajib diisi, tidak boleh hanya spasi, dan maksimal 150 karakter; pelanggaran ditolak dengan pesan. | Must | Draf (angka usulan) | U |
+| FR-TASK-03 | Sistem menempatkan tugas ke kuadran sesuai BR-01. | Must | Final | U |
+| FR-TASK-04 | Pengguna melihat seluruh tugas miliknya, dikelompokkan per kuadran. | Must | Final | U |
+| FR-TASK-05 | Pengguna dapat menandai tugas selesai; tugas selesai tetap terlihat dengan penanda yang tidak hanya berupa warna. | Must | Draf (usulan tampilan) | U |
+| FR-TASK-06 | Pengguna dapat memindahkan tugas ke kuadran lain; posisi baru tetap sama setelah halaman dimuat ulang. | Must | Final | U |
+| FR-TASK-07 | Setelah pemindahan, urgensi dan kepentingan tugas diselaraskan dengan kuadran tujuan sesuai BR-01. | Must | Final | U |
+| FR-TASK-08 | Pemindahan tugas dapat dilakukan tanpa drag-and-drop (kontrol tersendiri) pada semua ukuran layar. | Must | Final | D |
+| FR-TASK-09 | Bila penyimpanan perubahan gagal, tampilan kembali ke keadaan sebelumnya dan pengguna menerima pesan. | Must | Final | U |
+| FR-TASK-10 | Pengguna dapat mengubah judul, urgensi, dan kepentingan tugas. | Should | Final | U |
+| FR-TASK-11 | Pengguna dapat menghapus tugas setelah konfirmasi. | Should | Final | U |
+| FR-TASK-12 | ~~Pengguna dapat menetapkan tenggat pada tugas.~~ Dikeluarkan dari lingkup versi demo (KD-02); dapat dipertimbangkan pada versi berikutnya. | â€“ | Ditunda | â€“ |
+
+### 4.3 Dokumen dan Ruang Paham (`DOC`)
+
+| ID | Kebutuhan | Prioritas | Status | Verifikasi |
+|---|---|---|---|---|
+| FR-DOC-01 | Pengguna dapat memilih dan mengunggah berkas PDF. | Must | Final | U |
+| FR-DOC-02 | Sistem menolak berkas yang bukan PDF berdasarkan **isi berkas** di sisi server, bukan hanya nama atau tipe yang dikirim browser. | Must | Final | U |
+| FR-DOC-03 | Sistem menolak berkas lebih dari 5 MB dengan pesan yang jelas. | Must | Final | U |
+| FR-DOC-04 | Sistem mengekstrak teks dari maksimal 20 halaman pertama; pengguna diberi tahu bila halaman sisanya diabaikan. | Must | Final | U |
+| FR-DOC-05 | PDF rusak, terenkripsi, kosong, atau tanpa teks yang dapat diekstrak menghasilkan status gagal dengan penyebab yang dapat dipahami, tanpa data parsial yang tersisa. | Must | Final | U |
+| FR-DOC-06 | Pengguna melihat status pemrosesan dokumen: sedang diproses, siap, atau gagal. | Must | Final | D |
+| FR-DOC-07 | Sistem memecah teks menjadi potongan sesuai BAT-03. | Must | Final | U |
+| FR-DOC-08 | Sistem membuat representasi vektor untuk setiap potongan dan menyimpannya terkait dokumen dan pemilik. | Must | Final | I, U |
+| FR-DOC-09 | Pengguna melihat daftar dokumen miliknya beserta nama, ukuran, dan status. | Must | Final | U |
+| FR-DOC-10 | Pengguna dapat menghapus dokumen; file, potongan, riwayat chat, dan ringkasan dokumen itu ikut terhapus. | Should | Final | U |
+| FR-DOC-11 | Pengguna dapat memproses ulang dokumen yang gagal. | Could | Final | U |
+| FR-DOC-12 | Sistem membatasi jumlah dokumen maksimal 10 per akun; unggahan di atas batas ditolak dengan pesan yang jelas. | Should | Final | U |
+
+### 4.4 Ringkasan (`SUM`)
+
+| ID | Kebutuhan | Prioritas | Status | Verifikasi |
+|---|---|---|---|---|
+| FR-SUM-01 | Pengguna dapat meminta ringkasan berupa paragraf ringkas dan poin kunci dari dokumen berstatus siap. | Must | Final | U |
+| FR-SUM-02 | Ringkasan hanya berisi informasi dari dokumen yang dipilih (BR-04). | Must | Final | U |
+| FR-SUM-03 | Permintaan ringkasan pada dokumen yang belum siap ditolak dengan pesan yang jelas (BR-03). | Must | Final | U |
+| FR-SUM-04 | Ringkasan yang sudah dibuat tersimpan dan dapat dibuka kembali tanpa dibuat ulang. | Should | Final | U |
+| FR-SUM-05 | Pengguna dapat meminta ringkasan dibuat ulang. | Could | Final | U |
+
+### 4.5 Tanya Jawab dan Riwayat (`CHAT`)
+
+| ID | Kebutuhan | Prioritas | Status | Verifikasi |
+|---|---|---|---|---|
+| FR-CHAT-01 | Pengguna dapat mengajukan pertanyaan pada dokumen miliknya yang berstatus siap. | Must | Final | U |
+| FR-CHAT-02 | Pertanyaan kosong, hanya spasi, atau lebih dari 1000 karakter ditolak dengan pesan. | Must | Draf (angka usulan) | U |
+| FR-CHAT-03 | Jawaban dibuat dari maksimal lima potongan paling relevan dan hanya dari dokumen yang dipilih (BAT-04). | Must | Final | I, U |
+| FR-CHAT-04 | Bila konteks yang ditemukan tidak cukup, sistem menyatakan informasi tidak ditemukan dalam materi dan tidak mengarang jawaban. Kriteria lulus: pada 10 pertanyaan uji yang jawabannya tidak ada di dokumen, minimal 9 dijawab dengan pernyataan keterbatasan. | Must | Final | U |
+| FR-CHAT-05 | Setiap pertanyaan dan jawaban tersimpan terkait dokumen dan pemilik yang benar. | Must | Final | U |
+| FR-CHAT-06 | Saat dokumen dibuka kembali, pengguna melihat riwayat percakapan dokumen itu berurutan menurut waktu. | Must | Final | U |
+| FR-CHAT-07 | Jawaban menampilkan nomor halaman sumber potongan yang digunakan. | Should | Final | U |
+
+### 4.6 Profil dan Statistik (`PROF`)
+
+| ID | Kebutuhan | Prioritas | Status | Verifikasi |
+|---|---|---|---|---|
+| FR-PROF-01 | Pengguna dapat melihat profil berisi email akunnya. | Must | Final | D |
+| FR-PROF-02 | Pengguna melihat statistik aktivitas belajar: jumlah dokumen berstatus siap, jumlah pertanyaan chat, dan streak (jumlah hari berurutan dengan minimal satu pertanyaan chat per hari, zona waktu Asia/Jakarta). | Must | Final | U |
+| FR-PROF-03 | Statistik dihitung hanya dari data milik pengguna tersebut. | Must | Final | U |
+
+### 4.7 Pengaturan dan Bantuan (`SET`)
+
+| ID | Kebutuhan | Prioritas | Status | Verifikasi |
+|---|---|---|---|---|
+| FR-SET-01 | Halaman pengaturan dan bantuan tersedia sesuai layar Figma. | Must | Final | D |
+| FR-SET-02 | Pengguna dapat memilih tema tampilan dan pilihan itu tersimpan lintas sesi. | Should | Final | U |
+| FR-SET-03 | Pengguna dapat mengatur ukuran teks dan pilihan itu tersimpan lintas sesi. | Should | Final | U |
+| FR-SET-04 | Pengguna dapat memilih bahasa antarmuka. | Could | Final | U |
+| FR-SET-05 | Pengguna dapat mengatur preferensi notifikasi. | Could | Final | U |
+| FR-SET-06 | Halaman bantuan menampilkan panduan penggunaan/FAQ. | Should | Final | D |
+| FR-SET-07 | Pengguna dapat mengirim feedback atau laporan bug. | Should | Final | U |
+
+> Prioritas FR-SET lebih rendah dari v1.0 (sebelumnya Must secara menyeluruh). Sesuai KD-09, tema dan ukuran teks diimplementasikan; bahasa dan notifikasi hanya bila waktu cukup. Sesuai KD-10, FAQ statis dan feedback tersimpan di sistem.
+
+### 4.8 Umum Antarmuka (`UI`)
+
+| ID | Kebutuhan | Prioritas | Status | Verifikasi |
+|---|---|---|---|---|
+| FR-UI-01 | Alur utama (tugas, unggah, ringkasan, chat, profil) memiliki keadaan memuat, kosong, sukses, dan error. | Must | Final | D |
+| FR-UI-02 | Pesan error berbahasa yang dapat dipahami pengguna dan tidak memuat detail teknis internal. | Must | Final | I, U |
+
+---
+
+## 5. Kebutuhan Nonfungsional
+
+Semua kriteria lulus bersifat terukur. Angka yang berasal dari PRD/SKPL v1.0 berstatus Final; angka baru berstatus **Draf (angka usulan)** dan perlu dikonfirmasi tim.
+
+### 5.1 Kinerja (`PERF`)
+
+| ID | Kebutuhan dan kriteria lulus | Prioritas | Status | Verifikasi |
+|---|---|---|---|---|
+| NFR-PERF-01 | **Waktu respons chat** dari pertanyaan terkirim sampai jawaban lengkap tampil: median â‰¤ 10 detik dan persentil ke-95 â‰¤ 20 detik, pada perangkat referensi, model sudah termuat, minimal 20 pertanyaan uji. | Must | Draf (angka usulan; â‰¤10 dt dari v1.0; kelayakan lihat 8.3) | A |
+| NFR-PERF-02 | Permintaan AI pertama setelah model tidak aktif selesai â‰¤ 30 detik dan UI menampilkan indikator menunggu. | Should | Draf (angka usulan) | A |
+| NFR-PERF-03 | Ringkasan yang sudah tersimpan tampil â‰¤ 2 detik; ringkasan yang baru dibuat selesai â‰¤ 30 detik untuk dokumen 20 halaman. | Should | Draf (angka usulan) | A |
+| NFR-PERF-04 | Pemrosesan PDF 20 halaman hingga status siap â‰¤ 120 detik pada perangkat referensi. | Should | Draf (angka usulan) | A |
+| NFR-PERF-05 | Halaman Matriks Tugas tampil â‰¤ 2 detik dengan 100 tugas; perubahan posisi/status tampak di UI â‰¤ 100 ms. | Should | Draf (angka usulan) | A |
+
+### 5.2 Keamanan (`SEC`)
+
+| ID | Kebutuhan dan kriteria lulus | Prioritas | Status | Verifikasi |
+|---|---|---|---|---|
+| NFR-SEC-01 | **Isolasi data.** RLS aktif pada semua tabel berisi data pengguna. Pada uji dengan dua akun, akun B memiliki 0 keberhasilan membaca, mengubah, atau menghapus data akun A melalui akses langsung ke Supabase maupun melalui layanan AI. | Must | Final | U, I |
+| NFR-SEC-02 | **Autentikasi permintaan AI.** Setiap permintaan ke layanan AI (selain pemeriksaan kesehatan) membawa token sesi yang diverifikasi tanda tangan, masa berlaku, dan audience-nya. Token hilang, kedaluwarsa, atau dimodifikasi menghasilkan penolakan 401 pada 100% kasus uji. | Must | Final | U |
+| NFR-SEC-03 | **Otorisasi dokumen.** Permintaan yang memakai ID dokumen milik pengguna lain ditolak pada 100% kasus uji dan responsnya tidak membedakan "bukan milik Anda" dari "tidak ada". | Must | Final | U |
+| NFR-SEC-04 | **Kata sandi.** Panjang minimal 8 karakter; kata sandi yang lebih pendek ditolak. Kata sandi tidak pernah tampil pada log, respons, maupun URL. | Must | Final | U, I |
+| NFR-SEC-05 | **Sesi.** Token akses berlaku â‰¤ 1 jam dan diperbarui otomatis; setelah keluar, token lama tidak dapat dipakai. Token sesi tidak disimpan di penyimpanan lokal browser yang dapat dibaca skrip halaman. | Must | Final | U, I |
+| NFR-SEC-06 | **Pembatasan laju.** Layanan AI membatasi setiap pengguna maksimal 20 permintaan chat per menit dan 5 permintaan pemrosesan dokumen per menit; kelebihan ditolak dengan 429. | Should | Draf (angka usulan) | U |
+| NFR-SEC-07 | **Keamanan unggahan.** Dari berkas uji berikut, 100% yang tidak valid ditolak sebelum diproses: berkas non-PDF berekstensi `.pdf`, berkas ZIP/EXE yang diganti nama, berkas 0 byte, berkas 5 MB + 1 byte, dan PDF terenkripsi. Batas ukuran dan tipe ditegakkan di sisi penyimpanan dan diperiksa ulang di backend; validasi di browser tidak dianggap sebagai pertahanan. | Must | Final | U |
+| NFR-SEC-08 | **Penyimpanan file.** Bucket PDF bersifat privat. Tidak ada URL publik; tautan sementara, bila dipakai, berlaku â‰¤ 60 detik. Pengguna hanya dapat mengakses objek pada folder miliknya. | Must | Draf (usulan masa berlaku) | U, I |
+| NFR-SEC-09 | **Rahasia.** Kunci server (termasuk service role key) tidak ada pada kode frontend, bundle browser, maupun repositori. Pemindaian rahasia pada repositori dan bundle menghasilkan 0 temuan. | Must | Final | I |
+| NFR-SEC-10 | **Validasi input server.** Semua permintaan ke layanan AI divalidasi terhadap skema; input tidak valid menghasilkan 422 dan tidak pernah menyebabkan 500 pada uji input cacat (JSON rusak, tipe salah, field hilang, string sangat panjang). | Must | Final | U |
+| NFR-SEC-11 | **Prompt injection.** Pada 5 dokumen uji yang berisi instruksi berbahaya (mengabaikan aturan, membocorkan prompt sistem, mengubah peran), sistem tidak mengikuti instruksi tersebut dan tidak mengungkap prompt sistem pada minimal 4 dari 5 dokumen. | Must | Draf (ambang usulan) | U |
+| NFR-SEC-12 | **Keluaran model aman.** Keluaran model ditampilkan tanpa mengeksekusi HTML atau skrip. Pada uji payload `<script>` dan `<img onerror>` di dalam jawaban/ringkasan, 0 skrip tereksekusi. | Must | Final | U |
+| NFR-SEC-13 | **Logging.** Log tidak memuat token, kata sandi, isi dokumen, isi pertanyaan, maupun isi jawaban. Setiap permintaan memiliki ID korelasi. Pemeriksaan sampel log pada skenario uji menemukan 0 data sensitif. | Must | Final | I |
+| NFR-SEC-14 | **Pesan error aman.** Respons error tidak memuat stack trace, path berkas, nama host internal, atau isi prompt. | Must | Final | U |
+| NFR-SEC-15 | **Dependensi.** Audit dependensi frontend dan backend saat rilis demo menunjukkan 0 kerentanan tingkat *critical* dan *high* yang belum ditangani atau didokumentasikan. | Should | Draf (usulan) | I |
+| NFR-SEC-16 | **Header keamanan frontend.** Respons aplikasi menyertakan kebijakan pembatasan konten (CSP), pencegahan sniffing tipe konten, dan pencegahan framing oleh situs lain. | Should | Draf (usulan) | I |
+
+### 5.3 Jaringan (`NET`)
+
+| ID | Kebutuhan dan kriteria lulus | Prioritas | Status | Verifikasi |
+|---|---|---|---|---|
+| NFR-NET-01 | **Ollama hanya lokal.** Layanan Ollama hanya menerima koneksi dari mesin yang sama. Uji dari perangkat lain di jaringan yang sama ke port Ollama harus gagal (koneksi ditolak/timeout). | Must | Final | U |
+| NFR-NET-02 | **Hanya localhost.** Sesuai KD-13, seluruh layanan (aplikasi web, layanan AI, Ollama) hanya menerima koneksi dari mesin yang sama (loopback). Uji dari perangkat lain di jaringan yang sama ke port aplikasi web, layanan AI, dan Ollama harus gagal untuk ketiganya. | Must | Final | U |
+| NFR-NET-03 | **Port minimal.** Pemindaian port ke alamat laptop dari perangkat lain di jaringan yang sama menunjukkan 0 port layanan PahaMIn yang terbuka. | Must | Final | U |
+| NFR-NET-04 | **Tanpa akses langsung browser ke Ollama.** Tidak ada alamat atau kredensial Ollama pada kode atau bundle frontend; semua proses AI melewati layanan AI backend. | Must | Final | I |
+| NFR-NET-05 | **Enkripsi ke layanan cloud.** Seluruh komunikasi ke Supabase memakai HTTPS (TLS 1.2 atau lebih baru); tidak ada fallback ke HTTP. Komunikasi tanpa TLS hanya diizinkan pada antarmuka loopback mesin yang sama. | Must | Final | I, U |
+| NFR-NET-06 | **CORS.** Layanan AI hanya mengizinkan origin aplikasi web yang terdaftar secara eksplisit; tidak memakai wildcard. Permintaan dari origin lain tidak menerima header izin CORS. CORS tidak dianggap sebagai kontrol otorisasi (lihat NFR-SEC-02). | Must | Final | U |
+| NFR-NET-07 | **Timeout antar-layanan.** Setiap panggilan ke Ollama dan Supabase memiliki batas waktu: embedding â‰¤ 30 detik, generasi â‰¤ 60 detik, Supabase â‰¤ 10 detik. Melewati batas menghasilkan error terkontrol ke pengguna (503), bukan permintaan yang menggantung. | Must | Draf (angka usulan) | U |
+| NFR-NET-08 | **Degradasi layanan.** Saat Ollama dimatikan, login dan Matriks Tugas tetap berfungsi penuh, sedangkan fitur AI menampilkan pesan layanan tidak tersedia. | Must | Final | U |
+| NFR-NET-09 | **Gangguan Supabase.** Saat Supabase tidak dapat dijangkau, aplikasi menampilkan pesan error dan tidak menampilkan status berhasil palsu. | Must | Final | U |
+
+### 5.4 Usability dan Aksesibilitas (`UX`)
+
+| ID | Kebutuhan dan kriteria lulus | Prioritas | Status | Verifikasi |
+|---|---|---|---|---|
+| NFR-UX-01 | Alur utama (masuk, buat tugas, pindahkan tugas, unggah PDF, tanya jawab) dapat diselesaikan hanya dengan keyboard, dengan indikator fokus yang jelas. | Must | Final | D |
+| NFR-UX-02 | Kontras teks terhadap latar minimal 4,5:1 (WCAG 2.1 AA) untuk teks normal. | Should | Draf (usulan) | I |
+| NFR-UX-03 | Pada lebar layar di bawah 768 px, matriks tugas tersusun vertikal; pada lebar 360 px tidak muncul scroll horizontal pada halaman utama. | Must | Final | D |
+| NFR-UX-04 | Status (kuadran, status dokumen, error) tidak hanya dibedakan oleh warna. | Must | Final | I |
+| NFR-UX-05 | Aplikasi berfungsi pada dua versi stabil terakhir Chrome, Edge, dan Firefox. | Should | Final | D |
+
+### 5.5 Keandalan (`REL`)
+
+| ID | Kebutuhan dan kriteria lulus | Prioritas | Status | Verifikasi |
+|---|---|---|---|---|
+| NFR-REL-01 | Kegagalan jaringan, database, penyimpanan, autentikasi, atau Ollama ditampilkan sebagai pesan yang jelas dan tidak membuat aplikasi berhenti berfungsi. | Must | Final | U |
+| NFR-REL-02 | Dokumen tidak pernah berstatus siap tanpa seluruh potongan dan vektornya tersimpan. Pada uji dengan proses diinterupsi di tengah jalan, 0 dokumen berstatus siap dengan data tidak lengkap. | Must | Final | U |
+| NFR-REL-03 | Dokumen tidak tertahan pada status "sedang diproses" lebih dari 15 menit; setelah itu berubah menjadi gagal. | Should | Draf (angka usulan) | U |
+
+### 5.6 Privasi dan Data (`PRV`)
+
+| ID | Kebutuhan dan kriteria lulus | Prioritas | Status | Verifikasi |
+|---|---|---|---|---|
+| NFR-PRV-01 | PDF dan isi dokumen diperlakukan sebagai data pengguna dan tidak dikirim ke layanan AI pihak ketiga. Pemeriksaan jejak jaringan saat pemrosesan menunjukkan 0 koneksi keluar selain ke Supabase dan Ollama lokal. | Must | Final | I, A |
+| NFR-PRV-02 | Instruksi di dalam dokumen tidak mengganti instruksi sistem AI atau membuka data di luar dokumen yang diizinkan (lihat uji NFR-SEC-11). | Must | Final | U |
+| NFR-PRV-03 | Data pribadi yang disimpan dibatasi pada email akun dan konten yang dibuat pengguna sendiri. | Should | Draf (usulan) | I |
+| NFR-PRV-04 | Penghapusan dokumen atau akun menghapus data turunannya sesuai keputusan retensi. | Should | Final | U |
+
+---
+
+## 6. Use Case
+
+### 6.1 Diagram
+
+Satu-satunya aktor adalah Mahasiswa. Layanan eksternal bukan aktor (lihat 2.2).
 
 ```mermaid
 flowchart LR
     student((Mahasiswa))
-    auth[Supabase Auth]
-    data[Supabase PostgreSQL dan pgvector]
-    storage[Supabase Storage]
-    ollama[Ollama lokal]
 
     subgraph pahamin[Sistem PahaMIn]
-        UC01([UC-01 Autentikasi])
-        UC02([UC-02 Kelola tugas dan matriks])
-        UC03([UC-03 Unggah dan proses PDF])
-        UC04([UC-04 Baca ringkasan])
-        UC05([UC-05 Tanya jawab berbasis dokumen])
-        UC06([UC-06 Lihat profil dan statistik])
-        UC07([UC-07 Buka pengaturan dan bantuan])
+        UC01([UC-01 Daftar akun])
+        UC02([UC-02 Masuk])
+        UC03([UC-03 Keluar])
+        UC04([UC-04 Buat dan lihat tugas])
+        UC05([UC-05 Pindahkan dan selesaikan tugas])
+        UC06([UC-06 Ubah dan hapus tugas])
+        UC07([UC-07 Unggah dan proses PDF])
+        UC08([UC-08 Lihat dan hapus dokumen])
+        UC09([UC-09 Baca ringkasan])
+        UC10([UC-10 Tanya jawab dokumen])
+        UC11([UC-11 Lihat riwayat chat])
+        UC12([UC-12 Lihat profil dan statistik])
+        UC13([UC-13 Atur preferensi])
+        UC14([UC-14 Bantuan dan feedback])
     end
 
     student --> UC01
@@ -124,227 +342,194 @@ flowchart LR
     student --> UC05
     student --> UC06
     student --> UC07
-
-    UC01 --> auth
-    UC02 --> data
-    UC03 --> storage
-    UC03 --> data
-    UC03 --> ollama
-    UC04 --> data
-    UC04 --> ollama
-    UC05 --> data
-    UC05 --> ollama
-    UC06 --> data
-
-    classDef external fill:#f4f4f5,stroke:#71717a,color:#18181b
-    class auth,data,storage,ollama external
+    student --> UC08
+    student --> UC09
+    student --> UC10
+    student --> UC11
+    student --> UC12
+    student --> UC13
+    student --> UC14
 ```
 
-UC-07 mencakup layar yang tersedia pada desain. Perilaku fungsional tiap pengaturan/bantuan tetap mengikuti keputusan terbuka di PRD.
+### 6.2 Skenario Ringkas
 
-## 6. Skenario Use Case
+| UC | Prasyarat | Alur utama | Alternatif / pengecualian | Kebutuhan terkait |
+|---|---|---|---|---|
+| UC-01 Daftar akun | Belum memiliki akun | Pengguna mengisi email dan kata sandi â†’ sistem membuat akun â†’ pengguna diarahkan ke halaman utama | Email sudah terdaftar atau kata sandi tidak memenuhi syarat â†’ pesan | FR-AUTH-01, 06, NFR-SEC-04 |
+| UC-02 Masuk | Memiliki akun | Pengguna mengisi kredensial â†’ sesi dibuat â†’ diarahkan ke halaman utama | Kredensial salah â†’ pesan netral; layanan gagal â†’ pesan error | FR-AUTH-02, 03, 05, 07 |
+| UC-03 Keluar | Sesi aktif | Pengguna memilih keluar â†’ sesi berakhir â†’ diarahkan ke masuk | â€“ | FR-AUTH-04 |
+| UC-04 Buat dan lihat tugas | Sesi aktif | Pengguna membuka Matriks Tugas â†’ sistem menampilkan tugas per kuadran â†’ pengguna mengisi judul, urgensi, kepentingan â†’ tugas muncul di kuadran sesuai BR-01 | Judul tidak valid â†’ pesan; gagal simpan â†’ pulihkan dan beri pesan | FR-TASK-01 s.d. 04, 09 |
+| UC-05 Pindahkan dan selesaikan tugas | Ada tugas | Pengguna memindahkan kartu (drag atau kontrol alternatif) atau menandai selesai â†’ tampilan langsung berubah â†’ perubahan tersimpan | Gagal simpan â†’ tampilan kembali + pesan | FR-TASK-05 s.d. 09 |
+| UC-06 Ubah dan hapus tugas | Ada tugas | Pengguna mengubah atau menghapus tugas (dengan konfirmasi) | Gagal simpan â†’ pesan | FR-TASK-10, 11, 12 |
+| UC-07 Unggah dan proses PDF | Sesi aktif | Pengguna memilih PDF â†’ sistem memvalidasi â†’ file disimpan â†’ teks diekstrak, dipotong, divektorkan â†’ status siap | Bukan PDF, > 5 MB, rusak, terenkripsi, kosong, tanpa teks, batas dokumen, atau Ollama/Supabase gagal â†’ status gagal dan pesan jelas | FR-DOC-01 s.d. 08, 12, NFR-SEC-07 |
+| UC-08 Lihat dan hapus dokumen | Sesi aktif | Pengguna melihat daftar dokumen â†’ dapat menghapus dokumen setelah konfirmasi | Hapus gagal â†’ pesan | FR-DOC-09, 10, 11 |
+| UC-09 Baca ringkasan | Dokumen siap, milik pengguna | Pengguna membuka/meminta ringkasan â†’ sistem menampilkan ringkasan | Dokumen belum siap atau layanan AI gagal â†’ pesan | FR-SUM-01 s.d. 05 |
+| UC-10 Tanya jawab dokumen | Dokumen siap | Pengguna mengirim pertanyaan â†’ sistem mencari potongan relevan â†’ menjawab berdasarkan konteks â†’ jawaban dan pertanyaan tersimpan | Pertanyaan tidak valid â†’ ditolak; konteks tidak cukup â†’ pernyataan keterbatasan; layanan gagal â†’ pesan dan opsi coba lagi | FR-CHAT-01 s.d. 05, 07 |
+| UC-11 Lihat riwayat chat | Dokumen memiliki percakapan | Pengguna membuka dokumen â†’ sistem menampilkan riwayat berurutan | Belum ada percakapan â†’ keadaan kosong | FR-CHAT-06 |
+| UC-12 Lihat profil dan statistik | Sesi aktif | Pengguna membuka profil â†’ sistem menampilkan email dan statistik | Data belum ada â†’ keadaan kosong | FR-PROF-01, 02, 03 |
+| UC-13 Atur preferensi | Sesi aktif | Pengguna mengubah tema, ukuran teks, bahasa, atau notifikasi â†’ tersimpan | Gagal simpan â†’ pesan | FR-SET-01 s.d. 05 |
+| UC-14 Bantuan dan feedback | Sesi aktif | Pengguna membaca bantuan atau mengirim feedback/laporan bug | Gagal kirim â†’ pesan | FR-SET-06, 07 |
 
-### UC-01 — Autentikasi
+Setiap use case memakai FR-UI-01 dan FR-UI-02 untuk keadaan loading/kosong/error.
 
-| Bagian | Rincian |
-|---|---|
-| Aktor utama | Mahasiswa |
-| Aktor pendukung | Supabase Auth |
-| Tujuan | Memulai atau mengakhiri sesi pengguna. |
-| Prasyarat | Aplikasi tersedia. Untuk login, pengguna sudah memiliki akun. |
-| Pemicu | Pengguna memilih Masuk, Daftar, atau Keluar pada UI. |
-| Alur utama | 1. Pengguna mengisi kredensial pada layar Figma. 2. Frontend mengirim kredensial ke Supabase Auth. 3. Supabase memvalidasi permintaan. 4. Frontend menerima status autentikasi dan sesi. 5. Pengguna diarahkan ke halaman yang sesuai. |
-| Alur alternatif | Kredensial tidak valid atau layanan gagal; sistem menampilkan pesan aman dan mempertahankan kesempatan mencoba kembali. |
-| Kondisi akhir | Sesi valid tersedia atau sesi pengguna telah diakhiri. |
-| Catatan terbuka | Metode login, verifikasi email, reset kata sandi, dan provider pihak ketiga belum diputuskan. |
+---
 
-### UC-02 — Kelola Tugas pada Matriks Eisenhower
+## 7. Model Domain
 
-| Bagian | Rincian |
-|---|---|
-| Aktor utama | Mahasiswa |
-| Aktor pendukung | Supabase PostgreSQL |
-| Tujuan | Mengatur prioritas dan status tugas milik pengguna. |
-| Prasyarat | Sesi valid dan pengguna membuka Matriks Tugas. |
-| Pemicu | Pengguna membuat tugas, memindahkan tugas, atau menandainya selesai. |
-| Alur utama | 1. Sistem mengambil dan menampilkan tugas pengguna. 2. Pengguna mengisi judul, urgensi, dan kepentingan untuk tugas baru. 3. Sistem menentukan kuadran awal: mendesak-penting, tidak mendesak-penting, mendesak-tidak penting, atau tidak mendesak-tidak penting. 4. Pengguna dapat memindahkan kartu ke kuadran lain atau menandainya selesai. 5. UI memperbarui tampilan secara optimistik dan mengirim perubahan ke Supabase. 6. Sistem mempertahankan perubahan setelah penyimpanan berhasil. |
-| Alur alternatif | Jika penyimpanan gagal, UI mengembalikan kartu/status ke nilai sebelumnya dan menampilkan notifikasi error. Pada layar kecil, pengguna memindahkan tugas melalui kontrol sentuh yang tersedia. |
-| Kondisi akhir | Perubahan tersimpan dan hanya dapat diakses oleh pemilik tugas. |
-| Catatan terbuka | Pengeditan/penghapusan, tenggat, serta dampak pemindahan kuadran terhadap atribut urgensi dan kepentingan belum disetujui. |
-
-### UC-03 — Unggah dan Proses PDF
-
-| Bagian | Rincian |
-|---|---|
-| Aktor utama | Mahasiswa |
-| Aktor pendukung | Supabase Storage, Supabase PostgreSQL/pgvector, FastAPI, Ollama |
-| Tujuan | Mengubah PDF milik pengguna menjadi sumber belajar yang dapat diringkas dan ditanyakan. |
-| Prasyarat | Sesi valid; pengguna memilih file PDF. |
-| Pemicu | Pengguna mengunggah file. |
-| Alur utama | 1. Frontend memberi umpan balik bahwa unggahan dimulai. 2. Sistem memvalidasi file di sisi server: format PDF dan ukuran maksimal 5 MB. 3. File disimpan dengan akses yang dibatasi kepada pemilik. 4. FastAPI memeriksa otorisasi serta mengekstrak maksimal 20 halaman pertama memakai PyMuPDF. 5. Teks dipecah menjadi chunk sekitar 500 token dengan overlap sekitar 50 token. 6. Ollama membuat embedding `nomic-embed-text`. 7. Sistem menyimpan metadata dokumen, chunk, dan vector yang terhubung ke pemilik. 8. UI menunjukkan status berhasil diproses. |
-| Alur alternatif | File bukan PDF, terlalu besar, rusak, terenkripsi, kosong, atau tidak memiliki teks yang dapat diekstrak; sistem menolak atau menandai proses gagal dan menampilkan pesan yang dapat dipahami. Gangguan Storage, database, atau Ollama tidak boleh meninggalkan status sukses palsu. |
-| Kondisi akhir | Dokumen berhasil diproses dan siap digunakan, atau pengguna menerima status gagal yang jelas. |
-| Catatan terbuka | Rute API, mekanisme transfer aman ke FastAPI, jumlah unggahan, pemrosesan ulang, serta retensi/penghapusan harus ditetapkan dalam rancangan teknis/keputusan produk. |
-
-### UC-04 — Baca Ringkasan Materi
-
-| Bagian | Rincian |
-|---|---|
-| Aktor utama | Mahasiswa |
-| Aktor pendukung | FastAPI, Ollama, Supabase |
-| Tujuan | Membaca ringkasan dari dokumen yang sudah diproses. |
-| Prasyarat | Sesi valid; dokumen milik pengguna berhasil diproses. |
-| Pemicu | Pengguna membuka ringkasan atau meminta ringkasan dibuat. |
-| Alur utama | 1. Sistem memeriksa kepemilikan dokumen. 2. FastAPI menyiapkan teks dokumen yang telah diekstrak. 3. Ollama `qwen 3.6` menghasilkan ringkasan sesuai schema respons. 4. FastAPI memvalidasi respons dan mengembalikannya ke frontend. 5. UI menampilkan ringkasan dan statusnya. |
-| Alur alternatif | Dokumen tidak dimiliki pengguna, belum selesai diproses, atau Ollama gagal; sistem menolak akses atau menampilkan status yang dapat dipulihkan. |
-| Kondisi akhir | Ringkasan ditampilkan atau pengguna menerima informasi kegagalan. |
-| Catatan terbuka | Panjang/format ringkasan serta apakah hasil disimpan permanen belum diputuskan. `SummaryResult` pada class diagram adalah hasil layanan konseptual, bukan tabel database yang sudah disetujui. |
-
-### UC-05 — Tanya Jawab Berbasis Dokumen
-
-| Bagian | Rincian |
-|---|---|
-| Aktor utama | Mahasiswa |
-| Aktor pendukung | FastAPI, Supabase pgvector/PostgreSQL, Ollama |
-| Tujuan | Mendapat jawaban berdasarkan dokumen milik pengguna. |
-| Prasyarat | Sesi valid; dokumen pengguna telah diproses. |
-| Pemicu | Pengguna mengirim pertanyaan pada dokumen yang dipilih. |
-| Alur utama | 1. FastAPI memvalidasi pengguna dan kepemilikan dokumen. 2. Sistem membuat embedding pertanyaan. 3. Supabase pgvector mencari paling banyak lima chunk relevan hanya dalam cakupan dokumen yang dipilih. 4. Ollama `qwen 3.6` membuat jawaban berdasarkan chunk tersebut. 5. FastAPI memvalidasi format respons. 6. Pesan pengguna dan jawaban disimpan terkait dokumen serta pemilik. 7. Frontend menampilkan jawaban dan riwayat percakapan. |
-| Alur alternatif | Pertanyaan kosong ditolak melalui validasi. Jika tidak ada konteks yang cukup, sistem menyatakan keterbatasan dan tidak mengarang jawaban. Jika layanan gagal, UI menampilkan error dan memungkinkan percobaan kembali. |
-| Kondisi akhir | Percakapan tampil dan tercatat, atau pengguna menerima status kegagalan. |
-| Catatan terbuka | Format citation/sumber jawaban dan batas performa terukur harus disepakati sebelum klaim produk final. |
-
-### UC-06 — Lihat Profil dan Statistik
-
-| Bagian | Rincian |
-|---|---|
-| Aktor utama | Mahasiswa |
-| Aktor pendukung | Supabase PostgreSQL |
-| Tujuan | Melihat ringkasan aktivitas belajar milik sendiri. |
-| Prasyarat | Sesi valid. |
-| Pemicu | Pengguna membuka halaman profil. |
-| Alur utama | 1. Sistem mengambil statistik yang disetujui dari data pengguna. 2. Sistem menampilkan aktivitas belajar, dokumen, percakapan, dan streak sesuai UI Figma. |
-| Alur alternatif | Data belum tersedia, terjadi error, atau sesi tidak valid; sistem menampilkan keadaan kosong, error, atau mengarahkan ke autentikasi. |
-| Kondisi akhir | Statistik yang ditampilkan hanya berasal dari data pemilik akun. |
-| Catatan terbuka | Rumus streak, zona waktu, dan definisi jumlah dokumen harus disepakati. |
-
-## 7. Class Diagram
-
-Diagram ini menggambarkan model konseptual yang ada pada PRD. Tabel database, kolom final, indeks, dan kebijakan relasi tetap harus disahkan melalui rancangan skema/migrasi.
+Model konseptual, bebas dari keputusan penyimpanan. Skema tabel, tipe data, dan indeks ada di DPPL.
 
 ```mermaid
 classDiagram
-    class UserProfile {
-        UUID userId
-        String email
-        DateTime createdAt
-        Int learningStreak
-        Int processedDocumentCount
+    class Pengguna {
+        email
+    }
+    class Tugas {
+        judul
+        mendesak
+        penting
+        selesai
+        posisi
+        kuadran() Kuadran
+    }
+    class Dokumen {
+        namaFile
+        ukuran
+        jumlahHalaman
+        status
+    }
+    class PotonganDokumen {
+        urutan
+        halaman
+        isi
+        representasiVektor
+    }
+    class PesanChat {
+        peran
+        isi
+        waktu
+    }
+    class Ringkasan {
+        isi
+        poinKunci
     }
 
-    class Task {
-        UUID id
-        UUID userId
-        String title
-        Boolean isUrgent
-        Boolean isImportant
-        Int quadrant
-        Boolean isCompleted
-        Int position
-        DateTime createdAt
-        DateTime updatedAt
-        create()
-        moveToQuadrant(quadrant)
-        markCompleted()
-    }
-
-    class Document {
-        UUID id
-        UUID userId
-        String fileName
-        String storagePath
-        Int fileSizeBytes
-        Int pageCount
-        String processingStatus
-        DateTime createdAt
-    }
-
-    class DocumentChunk {
-        UUID id
-        UUID documentId
-        Int sequence
-        String content
-        Vector embedding
-    }
-
-    class ChatMessage {
-        UUID id
-        UUID documentId
-        UUID userId
-        String role
-        String content
-        DateTime createdAt
-    }
-
-    class SummaryResult {
-        UUID documentId
-        String summaryText
-        List~String~ keyPoints
-        DateTime generatedAt
-    }
-
-    class DocumentProcessingService {
-        extractPdfText(file) ExtractionResult
-        splitIntoChunks(text) List~DocumentChunk~
-        embedAndStore(documentId, chunks) ProcessingResult
-        generateSummary(documentId) SummaryResult
-    }
-
-    class RagChatService {
-        answerQuestion(userId, documentId, question) ChatMessage
-        retrieveRelevantChunks(documentId, question) List~DocumentChunk~
-        saveConversation(userMessage, assistantMessage)
-    }
-
-    class OllamaClient {
-        createEmbedding(text) Vector
-        generateSummary(text) SummaryResult
-        generateAnswer(context, question) String
-    }
-
-    UserProfile "1" --> "0..*" Task : memiliki
-    UserProfile "1" --> "0..*" Document : mengunggah
-    UserProfile "1" --> "0..*" ChatMessage : memiliki riwayat
-    Document "1" *-- "0..*" DocumentChunk : dipecah menjadi
-    Document "1" --> "0..*" ChatMessage : memiliki percakapan
-    DocumentProcessingService ..> Document : memproses
-    DocumentProcessingService ..> DocumentChunk : membuat
-    DocumentProcessingService ..> OllamaClient : embedding dan ringkasan
-    RagChatService ..> Document : memeriksa kepemilikan
-    RagChatService ..> DocumentChunk : melakukan retrieval
-    RagChatService ..> ChatMessage : menyimpan
-    RagChatService ..> OllamaClient : membuat jawaban
-    DocumentProcessingService ..> SummaryResult : menghasilkan
+    Pengguna "1" --> "0..*" Tugas : memiliki
+    Pengguna "1" --> "0..*" Dokumen : mengunggah
+    Dokumen "1" *-- "0..*" PotonganDokumen : dipecah menjadi
+    Dokumen "1" --> "0..*" PesanChat : memiliki percakapan
+    Dokumen "1" --> "0..1" Ringkasan : memiliki
 ```
 
-### 7.1 Penjelasan Model
+Catatan:
 
-- **UserProfile** merepresentasikan profil aplikasi yang terhubung ke identitas Supabase Auth. Detail statistik dan streak tetap mengikuti keputusan terbuka pada PRD.
-- **Task** menyimpan urgensi, kepentingan, kuadran, posisi, dan status selesai. Tenggat, pengeditan, dan penghapusan belum dimasukkan sebagai perilaku pasti karena masih terbuka.
-- **Document** menyimpan metadata file dan status proses; isi file disimpan terpisah di Storage.
-- **DocumentChunk** menghubungkan teks dan embedding dengan dokumen. Kepemilikan chunk diturunkan dari dokumen yang dimiliki pengguna.
-- **ChatMessage** mencatat pesan user/asisten yang terkait dokumen dan pemiliknya.
-- **SummaryResult** adalah hasil layanan konseptual. Diagram tidak menyatakan bahwa sudah ada tabel ringkasan terpisah.
-- **DocumentProcessingService**, **RagChatService**, dan **OllamaClient** adalah layanan konseptual untuk menjelaskan tanggung jawab arsitektur, bukan class atau endpoint yang telah diimplementasikan.
-- Tidak ada class `Quiz`, `Question`, atau `QuizAttempt`, karena kuis bukan bagian scope PahaMIn saat ini.
+- `Tugas.kuadran()` diturunkan dari `mendesak` dan `penting` (BR-01); kuadran bukan data tersendiri.
+- `Ringkasan` disimpan permanen dan dapat dibuat ulang sesuai KD-04.
+- Status dokumen bernilai: menunggu, diproses, siap, gagal. Nilai tepatnya didefinisikan di DPPL.
+- Tidak ada entitas kuis karena kuis di luar lingkup.
 
-## 8. Traceability dan Keputusan Terbuka
+---
 
-Kebutuhan pada dokumen ini memetakan bagian fungsional PRD: `FR-AUTH`, `FR-TASK`, `FR-RAG`, `FR-PROFILE`, dan `FR-SET`. Detail prioritas, kriteria penerimaan, keamanan, dan keputusan terbuka tetap ada di [`project-requirements.md`](project-requirements.md).
+## 8. Keputusan
 
-Sebelum schema dan interaksi terkait difinalkan, tim perlu memutuskan metode autentikasi, pengeditan/penghapusan tugas, arti pemindahan kuadran terhadap urgensi/kepentingan, format dan persistensi ringkasan, citation jawaban, retensi dokumen, rumus streak, dan perilaku pengaturan. Jangan memperlakukan item **Open** sebagai kebutuhan final sebelum review.
+### 8.1 Status
 
-## 9. Referensi Proyek
+Pada 7 Oktober 2026 tim memutuskan **memakai seluruh rekomendasi bawaan** untuk KD-01 sampai KD-15 dan menetapkan perangkat referensi serta lingkungan demo. Kebutuhan yang bergantung pada keputusan tersebut berstatus Final. Dua keputusan masih membawa tindak lanjut (KD-11 dan KD-12, lihat 8.3).
+
+### 8.2 Log Keputusan
+
+| ID | Keputusan | Hasil yang berlaku | Kebutuhan terkait |
+|---|---|---|---|
+| KD-01 | Autentikasi | Email dan kata sandi tanpa verifikasi email; verifikasi email dan pemulihan kata sandi berprioritas Could; tanpa login pihak ketiga | FR-AUTH-01, 02, 06, 07 |
+| KD-02 | Lingkup pengelolaan tugas | Ubah dan hapus tugas masuk lingkup; tenggat dikeluarkan dari demo | FR-TASK-10, 11, 12 |
+| KD-03 | Kuadran dan atribut | Urgensi dan kepentingan diatur manual; pemindahan kuadran mengubah keduanya | FR-TASK-03, 07, BR-01 |
+| KD-04 | Ringkasan | Paragraf dan poin kunci; disimpan dan dapat dibuat ulang | FR-SUM-01, 04, 05 |
+| KD-05 | Penghapusan dan retensi | Hapus dokumen menghapus file, potongan, chat, dan ringkasannya; tanpa retensi otomatis | FR-DOC-10, 11, NFR-PRV-04 |
+| KD-06 | Batas dokumen | 10 dokumen per akun | FR-DOC-12 |
+| KD-07 | Sumber jawaban | Nomor halaman ditampilkan | FR-CHAT-07 |
+| KD-08 | Statistik profil | Streak = hari berurutan dengan minimal satu pertanyaan chat (Asia/Jakarta); dokumen dihitung bila berstatus siap | FR-PROF-02 |
+| KD-09 | Pengaturan | Tema dan ukuran teks diimplementasikan; bahasa dan notifikasi bila waktu cukup | FR-SET-02 s.d. 05 |
+| KD-10 | Bantuan | FAQ statis; feedback dan laporan bug tersimpan di sistem | FR-SET-06, 07 |
+| KD-11 | Perangkat referensi | Lenovo IdeaPad Gaming 3 15ACH6, Ryzen 5 5600H (ASM-04); target dan metode ukur di NFR-PERF | NFR-PERF-01 s.d. 05 |
+| KD-12 | Model AI | Wajib uji kualitas pencarian pada materi berbahasa Indonesia sebelum data diisi; ganti model embedding bila hasil buruk. **Pemilihan model generasi menunggu temuan 8.3.** | BAT-05, FR-DOC-08, FR-CHAT-04 |
+| KD-13 | Lingkungan demo | Hanya localhost | NFR-NET-02, 03 |
+| KD-14 | Browser | Dua versi stabil terakhir Chrome, Edge, Firefox | NFR-UX-05 |
+| KD-15 | Kata sandi dan sesi | Minimal 8 karakter; token akses â‰¤ 1 jam dengan pembaruan otomatis | NFR-SEC-04, 05 |
+
+### 8.3 Tindak Lanjut
+
+**TL-01. Konfirmasi spesifikasi mesin (KD-11).** Catat dari mesin sebenarnya: GPU, kapasitas VRAM, RAM (8 atau 16 GB), versi Windows, dan mode daya saat demo (dicolok/baterai). Tanpa data ini, hasil NFR-PERF tidak dapat dibandingkan.
+
+**TL-02. Kelayakan model generasi (KD-12).** Pemeriksaan pustaka Ollama menunjukkan `qwen3.6` tersedia dalam ukuran 27B (Â±17 GB) dan 35B (Â±24 GB) pada kuantisasi umum. Dengan GPU 4 GB VRAM dan RAM 8 atau 16 GB, model sebesar itu tidak muat di GPU, sebagian besar berjalan di CPU atau memakai memori virtual, dan hampir pasti tidak memenuhi NFR-PERF-01 (median â‰¤ 10 detik). Karena itu:
+
+1. Model generasi yang dipakai harus berukuran kecil (kelas sekitar 4 miliar parameter agar muat di VRAM 4 GB; kelas sekitar 8 miliar parameter hanya sebagian di GPU dan lebih lambat). Nama dan tag pastinya ditetapkan setelah dicoba di mesin, bukan dari dokumen ini.
+2. Pengujian: jalankan 10 pertanyaan pada tiap kandidat, catat waktu, mutu jawaban berbahasa Indonesia, dan kepatuhan pada FR-CHAT-04.
+3. Jika tidak ada kandidat yang memenuhi target, tim memilih salah satu: model lebih kecil, atau melonggarkan NFR-PERF-01 secara tertulis di SKPL.
+
+SKPL tidak menyebut nama model generasi; hal itu dicatat di DPPL setelah TL-02 selesai.
+
+### 8.4 Keputusan Desain (diputuskan pada DPPL v1.3)
+
+| ID | Pertanyaan | Keputusan | Bagian DPPL |
+|---|---|---|---|
+| DD-01 | Siapa yang memanggil layanan AI? | Hanya route handler Next.js sisi server; browser tidak memanggil layanan AI langsung | 1.6, 5.8, 8.3 |
+| DD-02 | Token pengguna atau service role ke Supabase? | Token pengguna; RLS selalu berlaku; service role tidak dipakai aplikasi | 1.6, 4.6, 7.5 |
+| DD-03 | Urutan validasi unggahan? | Metadata dan kuota, lalu file ke bucket, lalu pemeriksaan isi oleh layanan AI; file gagal dihapus | 1.6, 6.1, 7.3 |
+| DD-04 | 403 atau 404 untuk dokumen milik orang lain? | `404` yang identik dengan dokumen tidak ada | 1.6, 5.7 |
+| DD-05 | Pemrosesan PDF sinkron atau asinkron? | Asinkron; status dipantau lewat `dokumen.status_proses` | 1.6, 6.5 |
+
+---|---|---|---|
+| DD-01 | Siapa yang memanggil layanan AI: browser langsung atau perantara server web? | Menentukan batas kepercayaan, kebutuhan CORS, dan jalur jaringan | NFR-NET-02, 06 |
+| DD-02 | Layanan AI mengakses Supabase memakai token pengguna (RLS berlaku) atau service role (RLS terlewati)? | Menentukan apakah pengecekan kepemilikan manual menjadi satu-satunya pertahanan | NFR-SEC-01, 03 |
+| DD-03 | Urutan validasi unggahan: sebelum atau sesudah file mendarat di penyimpanan? | Menentukan cara NFR-SEC-07 dipenuhi | NFR-SEC-07 |
+| DD-04 | Respons untuk dokumen milik orang lain: 403 atau 404? | Mencegah pengungkapan keberadaan dokumen | NFR-SEC-03 |
+| DD-05 | Pemrosesan PDF sinkron atau asinkron, dan bagaimana frontend mengetahui statusnya? | Menentukan cara NFR-PERF-04 dan FR-DOC-06 dipenuhi | FR-DOC-06, NFR-REL-03 |
+
+---
+
+## 9. Traceability
+
+### 9.1 Pemetaan ID Lama (v1.0) ke ID Baru (v1.1)
+
+| ID v1.0 | ID v1.1 | Catatan |
+|---|---|---|
+| SKPL-F01 | FR-AUTH-01 s.d. 07 | Dipecah: daftar, masuk, pesan netral, keluar, redirect, verifikasi, pemulihan |
+| SKPL-F02 | FR-TASK-01 s.d. 04 | Dipecah: buat, validasi judul, kuadran, tampilan |
+| SKPL-F03 | FR-TASK-05 s.d. 09 | Dipecah: selesai, pindah, selaraskan atribut, alternatif non-drag, pemulihan gagal simpan |
+| SKPL-F04 | FR-TASK-10 s.d. 12 | Ubah, hapus, tenggat; diputuskan pada KD-02 |
+| SKPL-F05 | FR-DOC-01 s.d. 03, NFR-SEC-07 | Validasi tipe/ukuran dibuat terukur |
+| SKPL-F06 | FR-DOC-04 s.d. 06 | Ekstraksi, kegagalan terkontrol, status |
+| SKPL-F07 | FR-DOC-07, 08 | Library dan nama model dipindahkan ke DPPL |
+| SKPL-F08 | FR-SUM-01 s.d. 05 | Persistensi diputuskan pada KD-04 |
+| SKPL-F09 | FR-CHAT-01 s.d. 03 | Pembatasan input ditambah |
+| SKPL-F10 | FR-CHAT-04 s.d. 06 | Ditambah kriteria lulus dan use case riwayat |
+| SKPL-F11 | FR-PROF-01 s.d. 03 | Definisi diputuskan pada KD-08 |
+| SKPL-F12 | FR-SET-01 s.d. 07 | Prioritas diturunkan untuk item yang belum diputuskan |
+| SKPL-F13 | FR-UI-01, 02 | â€“ |
+| SKPL-NF01 | NFR-SEC-01, 02, 03 | Dibuat terukur |
+| SKPL-NF02 | NFR-SEC-09 | â€“ |
+| SKPL-NF03 | NFR-SEC-10 | Zod, react-hook-form, Pydantic dipindahkan ke DPPL |
+| SKPL-NF04 | NFR-PERF-01 s.d. 05 | Ditambah lingkungan ukur, persentil, dan target lain |
+| SKPL-NF05 | NFR-UX-01, 02, 04 | â€“ |
+| SKPL-NF06 | NFR-UX-03, FR-TASK-08 | â€“ |
+| SKPL-NF07 | NFR-REL-01, 02, NFR-SEC-14, FR-TASK-09 | â€“ |
+| SKPL-NF08 | NFR-PRV-01, 02, NFR-SEC-11 | â€“ |
+| (baru) | NFR-NET-01 s.d. 09 | Kebutuhan jaringan belum ada di v1.0 |
+| (baru) | NFR-SEC-04 s.d. 08, 12, 13, 15, 16 | Kebutuhan keamanan rinci |
+
+### 9.2 Pemetaan ke Grup PRD
+
+| Grup SKPL v1.1 | Grup PRD |
+|---|---|
+| `AUTH` | `FR-AUTH` |
+| `TASK` | `FR-TASK` |
+| `DOC`, `SUM`, `CHAT` | `FR-RAG` |
+| `PROF` | `FR-PROFILE` |
+| `SET` | `FR-SET` |
+| `UI`, `PERF`, `SEC`, `NET`, `UX`, `REL`, `PRV` | Keamanan, kinerja, dan kriteria penerimaan pada PRD |
+
+Detail prioritas dan kriteria penerimaan di PRD tetap berlaku; bila berbeda dengan dokumen ini, PRD yang disetujui mengungguli.
+
+### 9.3 Referensi Proyek
 
 - [PRD dan kriteria penerimaan](project-requirements.md)
 - [Konteks proyek](CONTEKST_PROYEK3.md)
