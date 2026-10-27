@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,7 +14,7 @@ const features = [
   {
     title: "Matriks Eisenhower",
     description:
-      "Kelola prioritas tugas dalam empat kuadran dengan drag-and-drop yang instan.",
+      "Kelola prioritas tugas dalam empat kuadran dengan drag-and-drop dan pemindahan instan.",
   },
   {
     title: "Ruang Paham",
@@ -26,7 +28,20 @@ const features = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  if (
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      redirect("/ruang-paham");
+    }
+  }
+
   return (
     <main className="flex flex-1 flex-col items-center gap-12 px-6 py-20">
       <section className="flex flex-col items-center gap-6 text-center">

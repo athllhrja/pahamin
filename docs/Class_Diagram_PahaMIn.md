@@ -235,75 +235,100 @@ classDiagram
     direction LR
 
     class AuthService {
-        +register(email, password) AuthResult
-        +login(email, password) AuthResult
-        +logout() void
-        +getCurrentUser() AuthUser
+        -SupabaseAuthClient authClient
+        +AuthResult register(String email, String password)
+        +AuthResult login(String email, String password)
+        +void logout()
+        +SupabaseAuthUser getCurrentUser()
     }
 
     class TaskService {
-        +createTask(input) Task
-        +listTasks(userId) Task[]
-        +moveTask(taskId, mendesak, penting, posisi) Task
-        +completeTask(taskId, selesai) Task
-        +updateTask(taskId, input) Task
-        +deleteTask(taskId) void
+        -TaskRepository taskRepository
+        +Task createTask(CreateTaskInput input)
+        +Task[] listTasks(UUID userId)
+        +Task moveTask(UUID taskId, boolean mendesak, boolean penting, int posisi)
+        +Task completeTask(UUID taskId, boolean selesai)
+        +Task updateTask(UUID taskId, UpdateTaskInput input)
+        +void deleteTask(UUID taskId)
     }
 
     class DocumentProcessingService {
-        +process(userId, documentId) void
-        -extractPages(pdfBytes) PageText[]
-        -splitIntoChunks(pages) DocumentChunk[]
-        -embedAndStore(documentId, chunks) void
+        -DocumentRepository documentRepository
+        -ChunkRepository chunkRepository
+        -OllamaClient ollamaClient
+        -int maxUploadBytes
+        -int maxPages
+        +void process(UUID userId, UUID documentId)
+        -PageText[] extractPages(byte[] pdfBytes)
+        -DocumentChunk[] splitIntoChunks(PageText[] pages)
+        -void embedAndStore(UUID documentId, DocumentChunk[] chunks)
     }
 
     class SummaryService {
-        +getSummary(userId, documentId, regenerate) SummaryResult
+        -DocumentRepository documentRepository
+        -ChunkRepository chunkRepository
+        -OllamaClient ollamaClient
+        +SummaryResult getSummary(UUID userId, UUID documentId, boolean regenerate)
     }
 
     class RagChatService {
-        +answer(userId, documentId, question) ChatAnswer
-        -retrieve(documentId, queryEmbedding) DocumentChunk[]
-        -buildPrompt(chunks, question) Prompt
-        -saveConversation(userMessage, assistantMessage) void
+        -DocumentRepository documentRepository
+        -ChunkRepository chunkRepository
+        -ChatRepository chatRepository
+        -OllamaClient ollamaClient
+        -int topK
+        -float similarityThreshold
+        +ChatAnswer answer(UUID userId, UUID documentId, String question)
+        -DocumentChunk[] retrieve(UUID documentId, Vector768 queryEmbedding)
+        -String buildPrompt(DocumentChunk[] chunks, String question)
+        -void saveConversation(ChatMessage userMessage, ChatMessage assistantMessage)
     }
 
     class ProfileService {
-        +getProfile(userId) UserProfile
-        +updatePreferences(userId, preferences) UserProfile
-        +getLearningStatistics(userId) LearningStatistics
+        -SupabaseClient dbClient
+        +UserProfile getProfile(UUID userId)
+        +UserProfile updatePreferences(UUID userId, JsonObject preferences)
+        +LearningStatistics getLearningStatistics(UUID userId)
     }
 
     class FeedbackService {
-        +submit(userId, type, content) Feedback
+        -SupabaseClient dbClient
+        +Feedback submit(UUID userId, FeedbackType type, String content)
     }
 
     class OllamaClient {
-        +embed(texts, isQuery) Vector768[]
-        +generate(prompt, options) String
-        +generateJson(prompt, schema) JsonObject
+        -String baseUrl
+        -String embedModel
+        -String chatModel
+        +Vector768[] embed(String[] texts, boolean isQuery)
+        +String generate(String prompt, GenerationOptions options)
+        +JsonObject generateJson(String prompt, JsonObject schema)
     }
 
     class DocumentRepository {
-        +getOwned(userId, documentId) Document
-        +updateStatus(documentId, status, errorCode) void
+        -SupabaseClient dbClient
+        +Document getOwned(UUID userId, UUID documentId)
+        +void updateStatus(UUID documentId, DocumentStatus status, String errorCode)
     }
 
     class TaskRepository {
-        +insert(task) Task
-        +listOwned(userId) Task[]
-        +update(task) Task
-        +deleteOwned(userId, taskId) void
+        -SupabaseClient dbClient
+        +Task insert(Task task)
+        +Task[] listOwned(UUID userId)
+        +Task update(Task task)
+        +void deleteOwned(UUID userId, UUID taskId)
     }
 
     class ChunkRepository {
-        +insertMany(documentId, chunks) void
-        +search(documentId, embedding, limit) DocumentChunk[]
+        -SupabaseClient dbClient
+        +void insertMany(UUID documentId, DocumentChunk[] chunks)
+        +DocumentChunk[] search(UUID documentId, Vector768 embedding, int limit)
     }
 
     class ChatRepository {
-        +insert(message) ChatMessage
-        +list(documentId) ChatMessage[]
+        -SupabaseClient dbClient
+        +void insert(ChatMessage message)
+        +ChatMessage[] list(UUID documentId)
     }
 
     AuthService ..> SupabaseAuthUser
@@ -314,6 +339,7 @@ classDiagram
     DocumentProcessingService ..> ChunkRepository
     SummaryService ..> OllamaClient
     SummaryService ..> DocumentRepository
+    SummaryService ..> ChunkRepository
     RagChatService ..> OllamaClient
     RagChatService ..> DocumentRepository
     RagChatService ..> ChunkRepository
@@ -388,11 +414,11 @@ export abstract class UserProfile {
     private diperbaruiPada: DateTime,
   ) {}
 
-  abstract getUserId(): UUID;
-  abstract getStreakBelajar(): number;
-  abstract getPreferensi(): JsonObject;
-  abstract updatePreferensi(preferensi: JsonObject): void;
-  abstract updateStreak(streak: number): void;
+  public abstract getUserId(): UUID;
+  public abstract getStreakBelajar(): number;
+  public abstract getPreferensi(): JsonObject;
+  public abstract updatePreferensi(preferensi: JsonObject): void;
+  public abstract updateStreak(streak: number): void;
 }
 
 export abstract class Task {
@@ -408,15 +434,15 @@ export abstract class Task {
     private diperbaruiPada: DateTime,
   ) {}
 
-  abstract getTaskId(): UUID;
-  abstract getJudul(): string;
-  abstract isMendesak(): boolean;
-  abstract isPenting(): boolean;
-  abstract isSelesai(): boolean;
-  abstract getPosisi(): number;
-  abstract updateJudul(judul: string): void;
-  abstract pindahKeKuadran(mendesak: boolean, penting: boolean, posisi: number): void;
-  abstract tandaiSelesai(selesai: boolean): void;
+  public abstract getTaskId(): UUID;
+  public abstract getJudul(): string;
+  public abstract isMendesak(): boolean;
+  public abstract isPenting(): boolean;
+  public abstract isSelesai(): boolean;
+  public abstract getPosisi(): number;
+  public abstract updateJudul(judul: string): void;
+  public abstract pindahKeKuadran(mendesak: boolean, penting: boolean, posisi: number): void;
+  public abstract tandaiSelesai(selesai: boolean): void;
 }
 
 export abstract class Document {
@@ -435,14 +461,14 @@ export abstract class Document {
     private readonly dibuatPada: DateTime,
   ) {}
 
-  abstract getDocumentId(): UUID;
-  abstract getNamaFile(): string;
-  abstract getStatusProses(): DocumentStatus;
-  abstract getRingkasan(): string | null;
-  abstract mulaiPemrosesan(waktu: DateTime): void;
-  abstract tandaiSiap(jumlahHalaman: number, waktu: DateTime): void;
-  abstract tandaiGagal(kodeError: string): void;
-  abstract simpanRingkasan(ringkasan: string, waktu: DateTime): void;
+  public abstract getDocumentId(): UUID;
+  public abstract getNamaFile(): string;
+  public abstract getStatusProses(): DocumentStatus;
+  public abstract getRingkasan(): string | null;
+  public abstract mulaiPemrosesan(waktu: DateTime): void;
+  public abstract tandaiSiap(jumlahHalaman: number, waktu: DateTime): void;
+  public abstract tandaiGagal(kodeError: string): void;
+  public abstract simpanRingkasan(ringkasan: string, waktu: DateTime): void;
 }
 
 export abstract class DocumentChunk {
@@ -455,10 +481,10 @@ export abstract class DocumentChunk {
     private readonly embedding: Vector768,
   ) {}
 
-  abstract getChunkId(): UUID;
-  abstract getHalaman(): number;
-  abstract getIsi(): string;
-  abstract getEmbedding(): Vector768;
+  public abstract getChunkId(): UUID;
+  public abstract getHalaman(): number;
+  public abstract getIsi(): string;
+  public abstract getEmbedding(): Vector768;
 }
 
 export abstract class ChatMessage {
@@ -473,11 +499,11 @@ export abstract class ChatMessage {
     private readonly dibuatPada: DateTime,
   ) {}
 
-  abstract getMessageId(): UUID;
-  abstract getPeran(): ChatRole;
-  abstract getIsi(): string;
-  abstract getSumber(): readonly SourceReference[] | null;
-  abstract getUrutan(): number;
+  public abstract getMessageId(): UUID;
+  public abstract getPeran(): ChatRole;
+  public abstract getIsi(): string;
+  public abstract getSumber(): readonly SourceReference[] | null;
+  public abstract getUrutan(): number;
 }
 
 export abstract class Feedback {
@@ -489,30 +515,212 @@ export abstract class Feedback {
     private readonly dibuatPada: DateTime,
   ) {}
 
-  abstract getFeedbackId(): UUID;
-  abstract getJenis(): FeedbackType;
-  abstract getIsi(): string;
+  public abstract getFeedbackId(): UUID;
+  public abstract getJenis(): FeedbackType;
+  public abstract getIsi(): string;
+}
+
+export interface CreateTaskInput {
+  judul: string;
+  mendesak: boolean;
+  penting: boolean;
+}
+
+export interface UpdateTaskInput {
+  judul?: string;
+  mendesak?: boolean;
+  penting?: boolean;
+}
+
+export interface PageText {
+  halaman: number;
+  isi: string;
+}
+
+export interface SummaryResult {
+  summary: string;
+  keyPoints: readonly string[];
+  generatedAt: DateTime;
+  cached: boolean;
+}
+
+export interface ChatAnswer {
+  status: "success" | "insufficient_context";
+  answer: string;
+  sources: readonly SourceReference[];
+}
+
+export interface LearningStatistics {
+  readyDocumentCount: number;
+  chatQuestionCount: number;
+  streakBelajar: number;
+}
+
+export interface GenerationOptions {
+  temperature: number;
+  numCtx: number;
+}
+
+export abstract class OllamaClient {
+  constructor(
+    private readonly baseUrl: string,
+    private readonly embedModel: string,
+    private readonly chatModel: string,
+  ) {}
+
+  public abstract embed(texts: readonly string[], isQuery: boolean): Promise<readonly Vector768[]>;
+  public abstract generate(prompt: string, options: GenerationOptions): Promise<string>;
+  public abstract generateJson(prompt: string, schema: JsonObject): Promise<JsonObject>;
+}
+
+export abstract class DocumentRepository {
+  constructor(private readonly dbClient: unknown) {}
+
+  public abstract getOwned(userId: UUID, documentId: UUID): Promise<Document>;
+  public abstract updateStatus(
+    documentId: UUID,
+    status: DocumentStatus,
+    errorCode: string | null,
+  ): Promise<void>;
+}
+
+export abstract class TaskRepository {
+  constructor(private readonly dbClient: unknown) {}
+
+  public abstract insert(task: Task): Promise<Task>;
+  public abstract listOwned(userId: UUID): Promise<readonly Task[]>;
+  public abstract update(task: Task): Promise<Task>;
+  public abstract deleteOwned(userId: UUID, taskId: UUID): Promise<void>;
+}
+
+export abstract class ChunkRepository {
+  constructor(private readonly dbClient: unknown) {}
+
+  public abstract insertMany(documentId: UUID, chunks: readonly DocumentChunk[]): Promise<void>;
+  public abstract search(
+    documentId: UUID,
+    embedding: Vector768,
+    limit: number,
+  ): Promise<readonly DocumentChunk[]>;
+}
+
+export abstract class ChatRepository {
+  constructor(private readonly dbClient: unknown) {}
+
+  public abstract insert(message: ChatMessage): Promise<void>;
+  public abstract list(documentId: UUID): Promise<readonly ChatMessage[]>;
+}
+
+export abstract class AuthService {
+  constructor(private readonly authClient: unknown) {}
+
+  public abstract register(email: string, password: string): Promise<UUID>;
+  public abstract login(email: string, password: string): Promise<UUID>;
+  public abstract logout(): Promise<void>;
+  public abstract getCurrentUser(): Promise<UUID | null>;
+}
+
+export abstract class TaskService {
+  constructor(private readonly taskRepository: TaskRepository) {}
+
+  public abstract createTask(input: CreateTaskInput): Promise<Task>;
+  public abstract listTasks(userId: UUID): Promise<readonly Task[]>;
+  public abstract moveTask(
+    taskId: UUID,
+    mendesak: boolean,
+    penting: boolean,
+    posisi: number,
+  ): Promise<Task>;
+  public abstract completeTask(taskId: UUID, selesai: boolean): Promise<Task>;
+  public abstract updateTask(taskId: UUID, input: UpdateTaskInput): Promise<Task>;
+  public abstract deleteTask(taskId: UUID): Promise<void>;
+}
+
+export abstract class DocumentProcessingService {
+  constructor(
+    private readonly documentRepository: DocumentRepository,
+    private readonly chunkRepository: ChunkRepository,
+    private readonly ollamaClient: OllamaClient,
+    private readonly maxUploadBytes: number,
+    private readonly maxPages: number,
+  ) {}
+
+  public abstract process(userId: UUID, documentId: UUID): Promise<void>;
+  protected abstract extractPages(pdfBytes: Uint8Array): readonly PageText[];
+  protected abstract splitIntoChunks(pages: readonly PageText[]): readonly DocumentChunk[];
+  protected abstract embedAndStore(
+    documentId: UUID,
+    chunks: readonly DocumentChunk[],
+  ): Promise<void>;
+}
+
+export abstract class SummaryService {
+  constructor(
+    private readonly documentRepository: DocumentRepository,
+    private readonly chunkRepository: ChunkRepository,
+    private readonly ollamaClient: OllamaClient,
+  ) {}
+
+  public abstract getSummary(
+    userId: UUID,
+    documentId: UUID,
+    regenerate: boolean,
+  ): Promise<SummaryResult>;
+}
+
+export abstract class RagChatService {
+  constructor(
+    private readonly documentRepository: DocumentRepository,
+    private readonly chunkRepository: ChunkRepository,
+    private readonly chatRepository: ChatRepository,
+    private readonly ollamaClient: OllamaClient,
+    private readonly topK: number,
+    private readonly similarityThreshold: number,
+  ) {}
+
+  public abstract answer(userId: UUID, documentId: UUID, question: string): Promise<ChatAnswer>;
+  protected abstract retrieve(
+    documentId: UUID,
+    queryEmbedding: Vector768,
+  ): Promise<readonly DocumentChunk[]>;
+  protected abstract buildPrompt(chunks: readonly DocumentChunk[], question: string): string;
+  protected abstract saveConversation(
+    userMessage: ChatMessage,
+    assistantMessage: ChatMessage,
+  ): Promise<void>;
+}
+
+export abstract class ProfileService {
+  constructor(private readonly dbClient: unknown) {}
+
+  public abstract getProfile(userId: UUID): Promise<UserProfile>;
+  public abstract updatePreferences(userId: UUID, preferences: JsonObject): Promise<UserProfile>;
+  public abstract getLearningStatistics(userId: UUID): Promise<LearningStatistics>;
+}
+
+export abstract class FeedbackService {
+  constructor(private readonly dbClient: unknown) {}
+
+  public abstract submit(userId: UUID, type: FeedbackType, content: string): Promise<Feedback>;
 }
 ```
 
 Kelas domain dan signature di atas belum mengimplementasikan validasi, persistence, atau aturan bisnis. Implementasi kelak harus menggunakan pola validasi frontend proyek dan kontrak Supabase/FastAPI; tipe data dan aturan tabel tetap diverifikasi pada batas backend/database.
 
-# 8. Rencana integrasi login
+# 8. Implementasi dan integrasi alur login (IMK – kode – database)
 
-Status inspeksi repo saat penyusunan dokumen: halaman awal sudah menautkan `/login` dan `/register`; client Supabase browser/server serta `proxy.ts` tersedia. Berkas halaman login/register belum tampak pada struktur `web/app` yang diperiksa. `proxy.ts` memanggil `getUser()` untuk memperbarui sesi, tetapi belum mengarahkan pengguna tanpa sesi dari route terlindungi. Karena itu alur login belum dapat dianggap selesai hanya dari keberadaan client Supabase.
+Alur autentikasi PahaMIn telah diimplementasikan secara menyeluruh menghubungkan lapisan antarmuka pengguna (IMK), kode aplikasi Next.js App Router, dan database Supabase (`auth.users` serta 6 tabel domain `public`):
 
-Tahapan agar alur IMK–kode–database tersambung:
-
-1. **Cocokkan alur IMK/Figma.** Tetapkan field email/password, label, validasi, status loading, pesan gagal netral, aksi daftar akun, dan tujuan setelah login. Implementasi harus mengikuti ekspor Figma yang disetujui.
-2. **Siapkan Supabase Auth.** Pastikan proyek Supabase tersedia dan metode email/password aktif. Konfigurasikan URL situs/redirect yang dipakai untuk localhost. Gunakan akun uji tanpa menaruh kredensial nyata di repo.
-3. **Siapkan konfigurasi frontend.** Pastikan `NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_ANON_KEY` tersedia di `web/.env.local`, lalu restart server web. Nilai ini dipakai client Supabase; jangan pernah memasukkan service role key ke browser.
-4. **Bangun halaman login dan register.** Buat route yang dituju tautan landing page. Gunakan form `react-hook-form`, schema Zod, `zodResolver`, dan client Supabase browser. Login email/password memanggil `signInWithPassword`; pendaftaran memanggil `signUp` sesuai konfigurasi Auth.
-5. **Pastikan sesi server.** Pertahankan cookie sesi melalui Supabase SSR. Gunakan `getUser()` untuk identitas yang diverifikasi pada server. Tambahkan proteksi route untuk halaman privat dan pengalihan yang konsisten untuk sesi valid/tidak valid.
-6. **Hubungkan identitas ke database.** Identitas `auth.users.id` menjadi `user_id` pada tabel aplikasi. Pastikan trigger pembuatan `profil_pengguna` dan kebijakan RLS berbasis `auth.uid()` berjalan. Login sukses tidak boleh memberi akses ke baris pengguna lain.
-7. **Selesaikan keluar dan pesan UI.** Aksi logout memanggil `signOut`, membersihkan cookie sesi, lalu mengarahkan ke halaman publik. Pesan gagal login harus netral dan tidak mengungkap apakah email terdaftar.
-8. **Verifikasi alur ujung ke ujung.** Periksa register/login valid, kata sandi salah, input tidak valid, refresh halaman setelah login, akses langsung route terlindungi, logout, sesi kedaluwarsa, serta isolasi data dua akun.
-
-Langkah di atas hanya penjelasan rencana. Tidak ada halaman login, konfigurasi Supabase, database, atau kode aplikasi yang diubah atau dijalankan sebagai bagian dari pembuatan dokumen ini.
+1. **Lapisan IMK / Antarmuka (`web/app/login/page.tsx`, `web/app/register/page.tsx`, `web/components/auth/`):**
+   - Mengikuti acuan visual ekspor Figma (`LOGIN.png`, `SIGN IN.png`) dan komponen dari prototipe `PahamIn_Developers` berupa kartu modal autentikasi di atas latar belakang *shell* Ruang Paham yang diburamkan (`AuthShellBackdrop`).
+   - Memakai validasi `react-hook-form` + `zodResolver` (`web/lib/schemas/auth.ts`) dengan pesan gagal masuk yang netral (`"Email atau kata sandi salah."`) sesuai `NFR-SEC-05` agar tidak membocorkan keberadaan email pengguna.
+2. **Lapisan Kode & Proteksi Sesi (`web/proxy.ts`, `web/lib/supabase/client.ts`, `web/lib/supabase/server.ts`):**
+   - Form `LoginForm` memanggil `supabase.auth.signInWithPassword({ email, password })` dan `RegisterForm` memanggil `supabase.auth.signUp({ email, password, options: { data: { full_name, username } } })`.
+   - `web/proxy.ts` (Next.js 16 Proxy) memverifikasi identitas pengguna pada sisi server melalui `supabase.auth.getUser()`, menyegarkan cookie sesi HTTP-only, mengalihkan pengguna tanpa sesi dari rute terlindungi (`/ruang-paham`, `/matrix`, `/profile`) ke `/login`, serta mengalihkan pengguna yang sudah masuk dari `/login` dan `/register` ke `/ruang-paham`.
+   - Aksi keluar pada `AppHeader` dan `ProfileView` memanggil `supabase.auth.signOut()`, membersihkan sesi, dan mengarahkan pengguna kembali ke `/login`.
+3. **Lapisan Database (`auth.users` & `public.profil_pengguna`, `dokumen`, `tugas`, `pesan_chat`):**
+   - Identitas `auth.users.id` menjadi kunci relasi `user_id` pada seluruh tabel domain dengan kebijakan *Row Level Security* (`auth.uid() = user_id`).
+   - Saat pengguna masuk atau mendaftar, baris `profil_pengguna` disinkronkan (`upsert` pada `user_id`), dan halaman `/ruang-paham`, `/matrix`, serta `/profile` memuat data milik pengguna yang sedang aktif langsung dari Supabase PostgreSQL.
 
 # 9. Sumber acuan
 
