@@ -11,7 +11,9 @@ Folder ini mengumpulkan panduan kerja tim, acuan desain, dan aturan coding PahaM
 
 ## Referensi Proyek
 
-- [SKPL / SRS](../SKPL.md): kebutuhan perangkat lunak, diagram use case, skenario, dan class diagram.
+- [SKPL / SRS v1.3](../SKPL_PahaMIn_INTERCORP_v1.3.md): spesifikasi kebutuhan perangkat lunak, aturan bisnis, use case, dan log keputusan.
+- [DPPL / SDD v1.3](../DPPL_PahaMIn_INTERCORP_v1.3.md): perancangan arsitektur, deployment lokal, skema 6 tabel & RLS, API, sequence, keamanan, dan jaringan.
+- [Class Diagram](../Class_Diagram_PahaMIn.md): model kelas domain dan layanan beserta evaluasi normalisasi.
 - [Konteks proyek terbaru](../CONTEKST_PROYEK3.md): status teknis, pembagian tim, keputusan, dan rencana sprint yang tercatat.
 - [Product Requirements Document](../project-requirements.md): kebutuhan produk, scope, alur, dan keputusan terbuka.
 - [Design brief](../design-brief.md): prinsip, token visual, layar, komponen, state, responsive behaviour, dan aksesibilitas.

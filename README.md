@@ -16,8 +16,12 @@ Repository ini masih berada pada tahap scaffolding dan persiapan pengembangan.
 ```text
 pahamin/
 ├── api/                         # Backend FastAPI untuk fitur AI
-├── docs/                        # PRD, konteks, panduan, prompt, dan acuan desain
-│   └── panduan/                 # Panduan tim, prompt, desain, dan aturan coding
+├── docs/                        # Dokumentasi rekayasa, manajemen proyek, dan acuan desain
+│   ├── PC/                      # Dokumen dan aset Project Charter
+│   ├── PMP/                     # Dokumen dan aset Project Management Plan
+│   ├── design-reference/        # Ekspor layar Figma (31 PNG)
+│   ├── panduan/                 # Panduan tim, prompt, desain, dan aturan coding
+│   └── prompts/                 # Template prompt peran AI
 ├── web/                         # Frontend Next.js
 ├── .cursorrules                 # Penunjuk untuk tool ke aturan coding lengkap
 ├── .gitignore                   # Aturan file yang tidak dimasukkan ke Git
@@ -58,19 +62,20 @@ Buka terminal di folder `web`, lalu jalankan:
 npm ci
 ```
 
-Buat `web/.env.local` berdasarkan variabel yang dibaca oleh klien Supabase di `web/lib/supabase/`:
+Buat `web/.env.local` berdasarkan `web/.env.example`:
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+FASTAPI_URL=http://127.0.0.1:8000
 ```
 
-Nilai tersebut berasal dari pengaturan project Supabase. `NEXT_PUBLIC_SUPABASE_ANON_KEY` adalah kunci publik untuk client; jangan masukkan service role key atau secret server ke berkas frontend.
+Nilai Supabase berasal dari pengaturan project Supabase. `NEXT_PUBLIC_SUPABASE_ANON_KEY` adalah kunci publik untuk client; `FASTAPI_URL` dipakai oleh route handler sisi server (DD-01) dan tidak boleh diberi awalan `NEXT_PUBLIC_`. Jangan masukkan service role key atau secret server ke berkas frontend.
 
-Kemudian, dari folder `web`, jalankan:
+Kemudian, dari folder `web`, jalankan (terikat ke loopback `127.0.0.1`):
 
 ```bash
-npm run dev
+npm run dev -- -H 127.0.0.1 -p 3000
 ```
 
 Buka `http://localhost:3000` di browser. Saat ini halaman yang tampil masih berupa landing page sementara.
@@ -101,24 +106,28 @@ Lanjutkan dari folder `api`:
 python -m pip install -r requirements.txt
 ```
 
-Salin `api/.env.example` menjadi `api/.env` dan isi nilai yang diperlukan ketika integrasi Ollama atau Supabase backend dikerjakan. `SUPABASE_SERVICE_ROLE_KEY` adalah secret server dan tidak boleh dikirim ke frontend atau dimasukkan ke prompt AI.
+Salin `api/.env.example` menjadi `api/.env` dan isi nilai yang diperlukan ketika integrasi Ollama atau Supabase backend dikerjakan. Sesuai keputusan desain `DD-02`, FastAPI mengakses Supabase menggunakan `SUPABASE_ANON_KEY` dan meneruskan JWT pengguna agar Row Level Security (RLS) selalu berlaku; `SUPABASE_SERVICE_ROLE_KEY` tidak dipakai oleh aplikasi dan tidak boleh disimpan di `.env` aplikasi maupun repository.
 
-Jalankan server lokal dari folder `api`:
+Jalankan server lokal dari folder `api` (terikat ke loopback `127.0.0.1`):
 
 ```bash
-uvicorn main:app --reload
+uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-Endpoint pemeriksaan kesehatan tersedia di `http://localhost:8000/health`. Endpoint pemrosesan PDF dan RAG belum tersedia.
+Endpoint pemeriksaan kesehatan tersedia di `http://127.0.0.1:8000/health`. Endpoint pemrosesan PDF dan RAG belum tersedia.
 
 ## Panduan Proyek
 
-- `docs/project-requirements.md`: kebutuhan produk, scope, alur pengguna, dan keputusan yang masih terbuka.
-- `docs/SKPL.md`: spesifikasi perangkat lunak, use case, skenario, dan class diagram.
+- `docs/project-requirements.md`: kebutuhan produk (PRD), scope, alur pengguna, dan keputusan produk.
+- `docs/SKPL_PahaMIn_INTERCORP_v1.3.md`: Spesifikasi Kebutuhan Perangkat Lunak (SRS) v1.3.
+- `docs/DPPL_PahaMIn_INTERCORP_v1.3.md`: Deskripsi Perancangan Perangkat Lunak (SDD) v1.3.
+- `docs/Class_Diagram_PahaMIn.md`: class diagram domain dan layanan beserta evaluasi normalisasi 1NF–3NF.
+- `docs/PPT Progress Pahamin.pptx`: presentasi progress perancangan selaras SKPL & DPPL v1.3.
+- `docs/PC/` dan `docs/PMP/`: dokumen serta aset visual Project Charter dan Project Management Plan.
 - `docs/CONTEKST_PROYEK3.md`: konteks dan status teknis yang tercatat untuk handoff.
 - `docs/design-brief.md`: keputusan dan spesifikasi desain sebelum implementasi UI.
 - `docs/panduan/UI_DESIGN_REFERENCE.md`: aturan implementasi desain Figma.
-- `docs/design-reference/figma-exports/`: ekspor layar UI/UX.
+- `docs/design-reference/figma-exports/`: ekspor 31 layar UI/UX Figma.
 - `docs/panduan/README.md`: indeks isi folder panduan.
 - `docs/panduan/Panduan_Prompt_AI.md`: cara memilih dan menggunakan prompt peran AI.
 - `docs/panduan/.cursorrules`: satu-satunya sumber lengkap aturan coding dan arsitektur.
