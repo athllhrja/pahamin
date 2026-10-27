@@ -722,6 +722,68 @@ Alur autentikasi PahaMIn telah diimplementasikan secara menyeluruh menghubungkan
    - Identitas `auth.users.id` menjadi kunci relasi `user_id` pada seluruh tabel domain dengan kebijakan *Row Level Security* (`auth.uid() = user_id`).
    - Saat pengguna masuk atau mendaftar, baris `profil_pengguna` disinkronkan (`upsert` pada `user_id`), dan halaman `/ruang-paham`, `/matrix`, serta `/profile` memuat data milik pengguna yang sedang aktif langsung dari Supabase PostgreSQL.
 
+## 8.1 Sequence diagram alur login dan proteksi sesi (IMK – kode – database)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor M as Mahasiswa
+    participant UI as IMK / UI Layer<br/>(LoginForm & RegisterForm)
+    participant ZOD as Kode Validasi & Client<br/>(Zod + Supabase Browser Client)
+    participant PRX as Kode Server & Proxy<br/>(web/proxy.ts + Server Page)
+    participant AUTH as Layanan Autentikasi<br/>(Supabase Auth / auth.users)
+    participant DB as Database Aplikasi<br/>(PostgreSQL: profil_pengguna, dokumen, tugas)
+
+    Note over M,DB: A. Alur Login (IMK -> Kode -> Database)
+    M->>UI: Input email & password, klik tombol "Login"
+    UI->>ZOD: Validasi loginSchema (react-hook-form + zodResolver)
+    alt Input tidak valid (format email salah / password < 6 karakter)
+        ZOD-->>UI: Kembalikan error field
+        UI-->>M: Tampilkan pesan validasi di bawah input
+    else Input valid
+        ZOD->>AUTH: signInWithPassword({ email, password })
+        alt Kredensial salah / akun tidak ditemukan
+            AUTH-->>ZOD: Error 400 Invalid login credentials
+            ZOD-->>UI: Tangkap error
+            UI-->>M: Tampilkan pesan netral "Email atau kata sandi salah." (NFR-SEC-05)
+        else Kredensial valid
+            AUTH-->>ZOD: Kembalikan session (JWT access_token + refresh_token) & user
+            ZOD->>DB: UPSERT public.profil_pengguna (user_id = auth.uid())
+            DB-->>ZOD: Baris profil_pengguna tersinkronisasi (RLS: auth.uid() = user_id)
+            ZOD-->>UI: Login sukses, simpan cookie sesi SSR
+            UI->>PRX: Navigasi ke /ruang-paham + router.refresh()
+        end
+    end
+
+    Note over M,DB: B. Verifikasi Sesi Server & Muat Data Terlindungi
+    PRX->>AUTH: supabase.auth.getUser() (verifikasi JWT dari cookie)
+    alt Sesi tidak ada / kedaluwarsa
+        AUTH-->>PRX: user = null
+        PRX-->>M: Redirect 307 ke /login?next=/ruang-paham
+    else Sesi valid
+        AUTH-->>PRX: user terverifikasi (id, email, user_metadata)
+        PRX->>DB: SELECT dokumen_id, nama_file, status_proses FROM dokumen WHERE user_id = user.id
+        DB-->>PRX: Daftar dokumen milik pengguna (difilter RLS)
+        PRX-->>M: Render halaman Ruang Paham (/ruang-paham)
+    end
+
+    Note over M,DB: C. Alur Logout (Keluar)
+    M->>UI: Klik "Keluar" pada menu profil (AppHeader / ProfileView)
+    UI->>AUTH: supabase.auth.signOut()
+    AUTH-->>UI: Hapus sesi & bersihkan cookie
+    UI-->>M: Redirect ke /login
+```
+
+## 8.2 Pemetaan artefak per lapisan (IMK – kode – database)
+
+| Lapisan | Berkas / Komponen | Method / Operasi Utama | Peran dalam Alur Login |
+|---|---|---|---|
+| **IMK (Antarmuka)** | `web/app/login/page.tsx`, `web/app/register/page.tsx`, `web/components/auth/auth-shell-backdrop.tsx` | `LoginPage()`, `RegisterPage()`, `AuthShellBackdrop()` | Menyajikan kartu modal autentikasi sesuai desain Figma di atas *shell* Ruang Paham |
+| **IMK (Form & Interaksi)** | `web/components/auth/login-form.tsx`, `web/components/auth/register-form.tsx` | `onSubmit()`, `handleOAuth()` | Menangani input email/password, status `isSubmitting`, toast notifikasi, dan pesan error netral |
+| **Kode (Validasi & Klien)** | `web/lib/schemas/auth.ts`, `web/lib/supabase/client.ts` | `loginSchema`, `registerSchema`, `createBrowserClient()` | Memvalidasi skema input di sisi klien dan mengirim request autentikasi ke Supabase Auth |
+| **Kode (Server & Proteksi)** | `web/proxy.ts`, `web/lib/supabase/server.ts`, `web/app/ruang-paham/page.tsx` | `proxy(request)`, `supabase.auth.getUser()` | Memvalidasi sesi JWT pada server, melindungi rute privat, dan menyegarkan cookie sesi |
+| **Database (Auth & Tabel)** | `auth.users`, `public.profil_pengguna`, `public.dokumen`, `public.tugas` | `signInWithPassword()`, `signUp()`, `upsert()`, kebijakan RLS `auth.uid() = user_id` | Memverifikasi kredensial, menyimpan profil pengguna, dan mengisolasi data antar-akun |
+
 # 9. Sumber acuan
 
 - `docs/DPPL_PahaMIn_INTERCORP_v1.3.md`: diagram layanan, ERD, kamus data, aturan autentikasi, RLS, serta pembagian tanggung jawab frontend/backend.
