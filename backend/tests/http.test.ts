@@ -59,6 +59,16 @@ test("invalid login input is rejected by server validation", async () => {
   assert.equal(response.status, 422);
 });
 
+test("origin validation uses the public host when Next.js normalizes request URL", async () => {
+  const request = new Request("http://localhost:3100/api/auth/login", {
+    method: "POST",
+    headers: { Origin: "http://127.0.0.1:3100", Host: "127.0.0.1:3100", "Content-Type": "application/json" },
+    body: JSON.stringify({ email: "bad", password: "short" }),
+  });
+  const response = await loginHandler(request, async () => clientMock());
+  assert.equal(response.status, 422);
+});
+
 test("task creation uses session owner and persists quadrant flags", async () => {
   const input = { judul: "  Belajar  ", mendesak: true, penting: false };
   let inserted: unknown;

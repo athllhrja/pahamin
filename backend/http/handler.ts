@@ -14,7 +14,9 @@ export function endpoint(
     try {
       if (!["GET", "HEAD"].includes(request.method)) {
         const origin = request.headers.get("origin");
-        if (origin !== new URL(request.url).origin) throw new AppError("FORBIDDEN", 403);
+        const expectedOrigin = new URL(request.url);
+        expectedOrigin.host = request.headers.get("host") || expectedOrigin.host;
+        if (origin !== expectedOrigin.origin) throw new AppError("FORBIDDEN", 403);
       }
       const data = await action(request, await createClient());
       return Response.json({ status: "success", data, request_id: requestId }, { status, headers });
